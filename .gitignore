@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+velora_auto/
+
+# Environment variables
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Distribution
+dist/
+build/
+*.egg-info/
+
+# User data
+data/user_memory/
+data/checkpoints/

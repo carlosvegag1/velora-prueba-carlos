@@ -1,0 +1,28 @@
+OFERTA DE EMPLEO: DESARROLLADOR PYTHON BACKEND SENIOR
+
+Descripción del puesto:
+Buscamos un desarrollador Python con experiencia en desarrollo backend para unirse a nuestro equipo de desarrollo. 
+El candidato ideal trabajará en proyectos innovadores utilizando las últimas tecnologías.
+
+REQUISITOS OBLIGATORIOS:
+- Experiencia mínima de 3 años en desarrollo con Python
+- Conocimientos sólidos en frameworks web (Django o Flask)
+- Experiencia trabajando con bases de datos relacionales (PostgreSQL o MySQL)
+- Conocimientos de Git y control de versiones
+- Experiencia en desarrollo de APIs REST
+
+REQUISITOS OPCIONALES (DESEABLES):
+- Certificación en AWS (Amazon Web Services)
+- Experiencia con Docker y contenedores
+- Conocimientos en Kubernetes
+- Experiencia en DevOps y CI/CD
+- Conocimientos en microservicios
+- Experiencia con sistemas de mensajería (RabbitMQ, Kafka)
+- Conocimientos en testing automatizado (pytest, unittest)
+
+Beneficios:
+- Salario competitivo
+- Trabajo remoto
+- Flexibilidad horaria
+- Oportunidades de crecimiento profesional
+

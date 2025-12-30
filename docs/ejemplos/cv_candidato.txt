@@ -1,0 +1,71 @@
+CURRICULUM VITAE
+
+DATOS PERSONALES
+Nombre: María González
+Email: maria.gonzalez@email.com
+Teléfono: +34 600 123 456
+Ubicación: Madrid, España
+LinkedIn: linkedin.com/in/mariagonzalez
+
+PERFIL PROFESIONAL
+Desarrolladora Python con más de 4 años de experiencia en desarrollo backend, 
+especializada en creación de APIs REST y aplicaciones web escalables. 
+Apasionada por las mejores prácticas de desarrollo y la arquitectura de software.
+
+EXPERIENCIA PROFESIONAL
+
+Desarrolladora Python Senior - TechSolutions S.L. (2021 - Presente)
+- Desarrollo de aplicaciones backend con Python y Django
+- Diseño e implementación de APIs REST para servicios web
+- Trabajo con bases de datos PostgreSQL y optimización de consultas
+- Colaboración en arquitectura de microservicios
+- Implementación de tests automatizados con pytest
+- Uso diario de Git y GitHub para control de versiones
+- Participación en code reviews y mentoring de desarrolladores junior
+
+Desarrolladora Python - DigitalCorp (2019 - 2021)
+- Desarrollo de aplicaciones web con Flask
+- Mantenimiento y mejora de bases de datos MySQL
+- Integración de APIs de terceros
+- Implementación de sistemas de autenticación y autorización
+- Trabajo en metodologías ágiles (Scrum)
+
+Desarrolladora Junior - StartupHub (2018 - 2019)
+- Desarrollo de scripts Python para automatización
+- Mantenimiento de aplicaciones web existentes
+- Soporte técnico y resolución de bugs
+
+EDUCACIÓN
+Grado en Ingeniería Informática - Universidad Politécnica de Madrid (2014 - 2018)
+Especialización en Sistemas de Información y Tecnologías Web
+
+HABILIDADES TÉCNICAS
+Lenguajes de Programación:
+- Python (Avanzado)
+- SQL (Avanzado)
+- JavaScript (Intermedio)
+- Bash (Intermedio)
+
+Frameworks y Librerías:
+- Django (Experto)
+- Flask (Avanzado)
+- FastAPI (Intermedio)
+- SQLAlchemy (Avanzado)
+
+Bases de Datos:
+- PostgreSQL (Avanzado)
+- MySQL (Avanzado)
+- Redis (Intermedio)
+
+Herramientas y Tecnologías:
+- Git, GitHub
+- Docker (Intermedio)
+- Linux
+- Postman
+- pytest, unittest
+
+IDIOMAS
+- Español: Nativo
+- Inglés: Avanzado (C1)
+- Francés: Intermedio (B2)
+
