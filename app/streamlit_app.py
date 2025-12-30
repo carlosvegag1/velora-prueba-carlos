@@ -1,16 +1,24 @@
 """
 Velora - Sistema de Evaluación de Candidatos
-Versión 1.2 - Fixed UI Visibility
+Versión 2.0 - Agente Conversacional con Streaming Real
 
 Prueba técnica desarrollada por Carlos Vega
 para postularse a Ingeniero de IA Generativa en Velora
+
+CARACTERÍSTICAS v2.0:
+- Streaming real token-by-token desde LLM
+- Agente conversacional empático y profesional
+- Cobertura garantizada de requisitos
+- Interfaz moderna tipo ChatGPT/Claude
 """
 
 import streamlit as st
 import sys
 import logging
+import time
 from pathlib import Path
 import os
+from typing import Generator
 
 # Rutas de logos de Velora (imágenes PNG)
 ASSETS_DIR = Path(__file__).resolve().parent / "assets"
@@ -22,7 +30,7 @@ VELORA_LOGO_APPLE_ICON = ASSETS_DIR / "Velora_logotipo_apple_icon.png"
 # CONFIGURACIÓN DE PÁGINA (PRIMERA INSTRUCCIÓN OBLIGATORIA)
 # =============================================================================
 st.set_page_config(
-    page_title="Velora | Evaluador de Candidatos",
+    page_title="Prueba Técnica | Carlos Vega",
     page_icon=str(VELORA_LOGO_APPLE_ICON),
     layout="wide",
     initial_sidebar_state="expanded"
@@ -49,7 +57,6 @@ try:
     )
     from src.evaluator.llm.embeddings_factory import EmbeddingFactory
     from src.evaluator.core.analyzer import Phase1Analyzer
-    from src.evaluator.models import InterviewResponse
 except ImportError as e:
     st.error(f"Error importando módulos: {e}. Asegúrate de ejecutar desde la raíz del proyecto.")
     st.stop()
@@ -156,12 +163,12 @@ st.markdown(f"""
     }}
     
     /* ============================================
-       SIDEBAR - Panel lateral con presencia visual
+       SIDEBAR - Panel lateral profesional y elegante
        ============================================ */
     section[data-testid="stSidebar"] {{
-        background: linear-gradient(180deg, #FAFBFC 0%, rgba(0, 180, 216, 0.04) 100%) !important;
-        border-right: 4px solid;
-        border-image: linear-gradient(180deg, {VELORA_PRIMARY}, {VELORA_SECONDARY}) 1 !important;
+        background: linear-gradient(180deg, #FAFBFC 0%, rgba(0, 180, 216, 0.03) 100%) !important;
+        border-right: 1px solid rgba(0, 180, 216, 0.15) !important;
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04) !important;
         width: 280px !important;
         min-width: 280px !important;
         padding-top: 0.5rem !important;
@@ -606,83 +613,94 @@ st.markdown(f"""
     }}
     
     /* ============================================
-       SISTEMA DE ESTADOS PROFESIONAL - Tamaños consistentes
+       SISTEMA DE ESTADOS PROFESIONAL v1.0 - Unificado
        ============================================ */
-    .status-approved {{
-        background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
-        color: #2E7D32;
-        padding: 0.5rem 1.25rem;
-        border-radius: 6px;
-        font-weight: 600;
-        font-size: 0.9375rem;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-        min-width: 100px;
-        line-height: 1.2;
-        vertical-align: middle;
-    }}
     
-    .status-rejected {{
-        background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%);
-        color: #C62828;
-        padding: 0.5rem 1.25rem;
-        border-radius: 6px;
-        font-weight: 600;
-        font-size: 0.9375rem;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-        min-width: 100px;
-        line-height: 1.2;
-        vertical-align: middle;
-    }}
-    
-    .status-pending {{
-        background: linear-gradient(135deg, #FFF9C4 0%, #FFF59D 100%);
-        color: #F57F17;
-        padding: 0.5rem 1.25rem;
-        border-radius: 6px;
-        font-weight: 600;
-        font-size: 0.9375rem;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-        min-width: 100px;
-        line-height: 1.2;
-        vertical-align: middle;
-    }}
-    
-    .status-phase1 {{
-        background: linear-gradient(135deg, rgba(0, 180, 216, 0.1) 0%, rgba(0, 206, 209, 0.15) 100%);
-        color: {VELORA_PRIMARY};
-        padding: 0.5rem 1.25rem;
-        border-radius: 6px;
-        font-weight: 600;
-        font-size: 0.9375rem;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-        min-width: 100px;
-        line-height: 1.2;
-        vertical-align: middle;
-    }}
-    
-    /* Contenedor para estado y fase alineados */
-    .status-phase-container {{
+    /* Card base para métricas del historial - dimensiones uniformes */
+    .history-metric-card {{
+        background: {VELORA_WHITE};
+        border: 1px solid rgba(0, 180, 216, 0.12);
+        border-radius: 10px;
+        padding: 1rem 1.25rem;
+        min-height: 85px;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 1rem;
-        margin: 0.5rem 0;
+        text-align: center;
+        transition: box-shadow 0.2s ease;
+    }}
+    
+    .history-metric-card:hover {{
+        box-shadow: 0 4px 12px rgba(0, 180, 216, 0.1);
+    }}
+    
+    .history-metric-label {{
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: {VELORA_GRAY};
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.4rem;
+    }}
+    
+    .history-metric-value {{
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: {VELORA_PRIMARY};
+        line-height: 1.2;
+    }}
+    
+    /* Status badge cards - APROBADO */
+    .history-metric-card.status-approved {{
+        background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+        border-color: rgba(76, 175, 80, 0.3);
+    }}
+    .history-metric-card.status-approved .history-metric-value {{
+        color: #2E7D32;
+        font-size: 1rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }}
+    
+    /* Status badge cards - RECHAZADO */
+    .history-metric-card.status-rejected {{
+        background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%);
+        border-color: rgba(244, 67, 54, 0.3);
+    }}
+    .history-metric-card.status-rejected .history-metric-value {{
+        color: #C62828;
+        font-size: 1rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }}
+    
+    /* Status badge cards - FASE 1 (turquesa corporativo) */
+    .history-metric-card.status-phase1 {{
+        background: linear-gradient(135deg, rgba(0, 180, 216, 0.12) 0%, rgba(0, 206, 209, 0.18) 100%);
+        border-color: rgba(0, 180, 216, 0.3);
+    }}
+    .history-metric-card.status-phase1 .history-metric-value {{
+        color: {VELORA_PRIMARY};
+        font-size: 1rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }}
+    
+    /* Status badge cards - FASE 2 (verde aprobado) */
+    .history-metric-card.status-phase2 {{
+        background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+        border-color: rgba(76, 175, 80, 0.3);
+    }}
+    .history-metric-card.status-phase2 .history-metric-value {{
+        color: #2E7D32;
+        font-size: 1rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
     }}
     
     /* ============================================
@@ -728,68 +746,114 @@ st.markdown(f"""
     }}
     
     /* ============================================
-       HISTORIAL - Expanders con fondo de color en título
+       HISTORIAL v1.0 - Sistema de expanders con estado
        ============================================ */
     
-    /* Variables CSS para colores de historial */
-    :root {{
-        --history-approved-bg: linear-gradient(90deg, rgba(76, 175, 80, 0.15) 0%, rgba(76, 175, 80, 0.08) 100%);
-        --history-approved-border: #4CAF50;
-        --history-rejected-bg: linear-gradient(90deg, rgba(244, 67, 54, 0.15) 0%, rgba(244, 67, 54, 0.08) 100%);
-        --history-rejected-border: #EF5350;
-        --history-phase1-bg: linear-gradient(90deg, rgba(0, 180, 216, 0.12) 0%, rgba(0, 180, 216, 0.05) 100%);
-        --history-phase1-border: {VELORA_PRIMARY};
+    /* Contenedor del historial - spacing ultra-compacto */
+    .history-container {{
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
     }}
     
-    /* Estilo base para expanders del historial */
-    [data-testid="stExpander"] details {{
-        border-radius: 10px !important;
-        margin-bottom: 0.75rem !important;
+    /* Contenedor individual de cada evaluación */
+    .history-item {{
+        border-radius: 8px;
         overflow: hidden;
+        transition: all 0.2s ease;
+        margin-bottom: 0.1rem !important;
     }}
     
-    /* Header del expander más grande y con padding */
-    [data-testid="stExpander"] summary {{
-        padding: 1rem 1.25rem !important;
-        font-size: 1rem !important;
+    /* Contenido interno del historial más compacto */
+    .history-item .stSuccess, .history-item .stWarning, .history-item .stError {{
+        padding: 0.4rem 0.75rem !important;
+        margin: 0.2rem 0 !important;
+        font-size: 0.85rem !important;
+    }}
+    
+    /* APROBADO - degradado verde */
+    .history-item-approved {{
+        background: linear-gradient(90deg, rgba(76, 175, 80, 0.2) 0%, rgba(76, 175, 80, 0.06) 100%);
+        border-left: 4px solid #4CAF50;
+    }}
+    .history-item-approved:hover {{
+        background: linear-gradient(90deg, rgba(76, 175, 80, 0.28) 0%, rgba(76, 175, 80, 0.1) 100%);
+        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.15);
+    }}
+    
+    /* RECHAZADO - degradado rojo */
+    .history-item-rejected {{
+        background: linear-gradient(90deg, rgba(244, 67, 54, 0.2) 0%, rgba(244, 67, 54, 0.06) 100%);
+        border-left: 4px solid #EF5350;
+    }}
+    .history-item-rejected:hover {{
+        background: linear-gradient(90deg, rgba(244, 67, 54, 0.28) 0%, rgba(244, 67, 54, 0.1) 100%);
+        box-shadow: 0 4px 12px rgba(244, 67, 54, 0.15);
+    }}
+    
+    /* SOLO FASE 1 - degradado turquesa */
+    .history-item-phase1 {{
+        background: linear-gradient(90deg, rgba(0, 180, 216, 0.18) 0%, rgba(0, 180, 216, 0.05) 100%);
+        border-left: 4px solid {VELORA_PRIMARY};
+    }}
+    .history-item-phase1:hover {{
+        background: linear-gradient(90deg, rgba(0, 180, 216, 0.26) 0%, rgba(0, 180, 216, 0.1) 100%);
+        box-shadow: 0 4px 12px rgba(0, 180, 216, 0.15);
+    }}
+    
+    /* Expander dentro del contenedor - hereda background */
+    .history-item [data-testid="stExpander"] {{
+        background: transparent !important;
+    }}
+    .history-item [data-testid="stExpander"] details {{
+        background: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        margin-bottom: 0 !important;
+    }}
+    .history-item [data-testid="stExpander"] summary {{
+        padding: 0.6rem 0.85rem !important;
+        font-size: 0.9rem !important;
         font-weight: 500 !important;
+        background: transparent !important;
     }}
     
-    /* Aprobado - Fondo verde en el título */
-    .expander-approved {{
-        background: linear-gradient(90deg, rgba(76, 175, 80, 0.18) 0%, rgba(76, 175, 80, 0.08) 100%) !important;
-        border-left: 5px solid #4CAF50 !important;
-        border-radius: 10px !important;
-        margin-bottom: 0.75rem;
+    /* Grid de métricas dentro del expander expandido */
+    .history-metrics-grid {{
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.75rem;
+        padding: 0.5rem 0;
     }}
     
-    /* Rechazado - Fondo rojo en el título */
-    .expander-rejected {{
-        background: linear-gradient(90deg, rgba(244, 67, 54, 0.18) 0%, rgba(244, 67, 54, 0.08) 100%) !important;
-        border-left: 5px solid #EF5350 !important;
-        border-radius: 10px !important;
-        margin-bottom: 0.75rem;
+    /* ============================================
+       RESPONSIVE - Adaptación mobile/tablet
+       ============================================ */
+    @media (max-width: 768px) {{
+        .history-metric-card {{
+            min-height: 70px;
+            padding: 0.75rem 1rem;
+        }}
+        .history-metric-value {{
+            font-size: 1.25rem;
+        }}
+        .history-item [data-testid="stExpander"] summary {{
+            font-size: 0.85rem !important;
+            padding: 0.75rem 0.85rem !important;
+        }}
     }}
     
-    /* Solo Fase 1 - Fondo azul en el título */
-    .expander-phase1 {{
-        background: linear-gradient(90deg, rgba(0, 180, 216, 0.15) 0%, rgba(0, 180, 216, 0.06) 100%) !important;
-        border-left: 5px solid {VELORA_PRIMARY} !important;
-        border-radius: 10px !important;
-        margin-bottom: 0.75rem;
-    }}
-    
-    .eval-card:hover {{
-        border-left-color: {VELORA_PRIMARY};
-        box-shadow: 0 4px 12px rgba(0, 180, 216, 0.1);
-    }}
-    
-    .eval-card-approved {{
-        border-left-color: {VELORA_SUCCESS};
-    }}
-    
-    .eval-card-rejected {{
-        border-left-color: {VELORA_ERROR};
+    @media (max-width: 480px) {{
+        .history-metric-card {{
+            min-height: 60px;
+            padding: 0.5rem 0.75rem;
+        }}
+        .history-metric-label {{
+            font-size: 0.6rem;
+        }}
+        .history-metric-value {{
+            font-size: 1rem;
+        }}
     }}
     
 </style>
@@ -874,13 +938,13 @@ def render_velora_header():
     
     st.markdown("""
         <p class="velora-subtitle">
-            Prueba técnica desarrollada por Carlos Vega para postularse a Ingeniero de IA Generativa en Velora
+            Prueba técnica desarrollada por Carlos Vega para postularse como Ingeniero de IA Generativa en Velora
         </p>
         <p class="velora-description">
-            Durante el desarrollo de este sistema he intentado superar los requisitos de la prueba y, simultáneamente, 
-            demostrar competencias adicionales en Ingeniería de IA. Integré tecnologías como LangGraph, 
-            hiperparametrización, RAG y LangSmith como extensiones coherentes para aportar valor, manteniendo 
-            siempre el foco en los objetivos fundamentales de la prueba.
+            He desarrollado este sistema con el ánimo de completar sus requisitos y, simultáneamente, 
+            intentar demostrar competencias adicionales en IA Generativa. Integré tecnologías como LangGraph, 
+            hiperparametrización, RAG y LangSmith como extensiones adicionales coherentes, intentando mantener 
+            siempre el foco en los objetivos fundamentales de la prueba técnica.
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -998,8 +1062,17 @@ def display_phase1_results(phase1_result):
         )
     
     with col2:
-        status = "DESCARTADO" if phase1_result.discarded else "EN PROCESO"
-        st.metric("Estado", status)
+        if phase1_result.discarded:
+            st.markdown("""
+            <div style="background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%); 
+                        padding: 0.75rem 1rem; border-radius: 8px; text-align: center;
+                        border: 1px solid rgba(198, 40, 40, 0.2);">
+                <p style="margin: 0; font-size: 0.7rem; color: #9E9E9E; text-transform: uppercase; letter-spacing: 0.05em;">Estado</p>
+                <p style="margin: 0.25rem 0 0 0; font-size: 1.25rem; font-weight: 700; color: #C62828;">DESCARTADO</p>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.metric("Estado", "EN PROCESO")
     
     with col3:
         total = len(phase1_result.fulfilled_requirements) + len(phase1_result.unfulfilled_requirements)
@@ -1007,6 +1080,28 @@ def display_phase1_results(phase1_result):
             "Requisitos Cumplidos",
             f"{len(phase1_result.fulfilled_requirements)}/{total}"
         )
+    
+    # Mensaje de estado semántico
+    if phase1_result.discarded:
+        st.markdown("""
+        <div style="background: linear-gradient(90deg, rgba(198, 40, 40, 0.1) 0%, rgba(198, 40, 40, 0.02) 100%);
+                    padding: 1rem 1.25rem; border-radius: 8px; margin: 1rem 0;
+                    border-left: 4px solid #C62828;">
+            <p style="margin: 0; color: #C62828; font-weight: 600; font-size: 1rem;">
+                Candidato descartado - No cumple requisitos obligatorios
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown(f"""
+        <div style="background: linear-gradient(90deg, rgba(0, 180, 216, 0.1) 0%, rgba(0, 180, 216, 0.02) 100%);
+                    padding: 1rem 1.25rem; border-radius: 8px; margin: 1rem 0;
+                    border-left: 4px solid {VELORA_PRIMARY};">
+            <p style="margin: 0; color: {VELORA_PRIMARY}; font-weight: 600; font-size: 1rem;">
+                Candidato en proceso - Análisis inicial completado
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
     
     # Requisitos cumplidos
     if phase1_result.fulfilled_requirements:
@@ -1101,25 +1196,70 @@ def display_final_results(result: EvaluationResult):
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        delta = None
-        if result.phase2_completed:
-            delta = f"{result.final_score - result.phase1_result.score:.1f}%"
-        st.metric("Puntuación Final", f"{result.final_score:.1f}%", delta=delta)
+        st.metric("Puntuación Final", f"{result.final_score:.1f}%")
     
     with col2:
         if result.final_discarded:
-            status = "DESCARTADO"
+            # Estado DESCARTADO - Rojo
+            st.markdown("""
+            <div style="background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%); 
+                        padding: 0.75rem 1rem; border-radius: 8px; text-align: center;
+                        border: 1px solid rgba(198, 40, 40, 0.2);">
+                <p style="margin: 0; font-size: 0.7rem; color: #9E9E9E; text-transform: uppercase; letter-spacing: 0.05em;">Decisión Final</p>
+                <p style="margin: 0.25rem 0 0 0; font-size: 1.25rem; font-weight: 700; color: #C62828;">DESCARTADO</p>
+            </div>
+            """, unsafe_allow_html=True)
         elif result.final_score >= 50:
-            status = "APROBADO"
+            # Estado APROBADO - Verde
+            st.markdown("""
+            <div style="background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%); 
+                        padding: 0.75rem 1rem; border-radius: 8px; text-align: center;
+                        border: 1px solid rgba(76, 175, 80, 0.2);">
+                <p style="margin: 0; font-size: 0.7rem; color: #9E9E9E; text-transform: uppercase; letter-spacing: 0.05em;">Decisión Final</p>
+                <p style="margin: 0.25rem 0 0 0; font-size: 1.25rem; font-weight: 700; color: #2E7D32;">APROBADO</p>
+            </div>
+            """, unsafe_allow_html=True)
         else:
-            status = "REVISIÓN"
-        st.metric("Decisión Final", status)
+            # Estado REVISIÓN - Neutro
+            st.metric("Decisión Final", "REVISIÓN")
     
     with col3:
         st.metric("Total Cumplidos", len(result.final_fulfilled_requirements))
     
     with col4:
         st.metric("Total No Cumplidos", len(result.final_unfulfilled_requirements))
+    
+    # Mensaje de estado semántico final
+    if result.final_discarded:
+        st.markdown("""
+        <div style="background: linear-gradient(90deg, rgba(198, 40, 40, 0.1) 0%, rgba(198, 40, 40, 0.02) 100%);
+                    padding: 1rem 1.25rem; border-radius: 8px; margin: 1rem 0;
+                    border-left: 4px solid #C62828;">
+            <p style="margin: 0; color: #C62828; font-weight: 600; font-size: 1rem;">
+                Candidato descartado - No cumple requisitos obligatorios
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    elif result.final_score >= 50:
+        st.markdown("""
+        <div style="background: linear-gradient(90deg, rgba(46, 125, 50, 0.1) 0%, rgba(46, 125, 50, 0.02) 100%);
+                    padding: 1rem 1.25rem; border-radius: 8px; margin: 1rem 0;
+                    border-left: 4px solid #2E7D32;">
+            <p style="margin: 0; color: #2E7D32; font-weight: 600; font-size: 1rem;">
+                Candidato aprobado - Cumple con el perfil requerido
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <div style="background: linear-gradient(90deg, rgba(255, 152, 0, 0.1) 0%, rgba(255, 152, 0, 0.02) 100%);
+                    padding: 1rem 1.25rem; border-radius: 8px; margin: 1rem 0;
+                    border-left: 4px solid #FF9800;">
+            <p style="margin: 0; color: #E65100; font-weight: 600; font-size: 1rem;">
+                Candidato en revisión - Requiere evaluación adicional
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
     
     # Resumen ejecutivo
     st.markdown("#### Resumen Ejecutivo")
@@ -1152,113 +1292,304 @@ def display_final_results(result: EvaluationResult):
                 )
 
 
-def render_chat_interview():
+def stream_text(text: str, delay: float = 0.02) -> Generator[str, None, None]:
+    """Genera texto carácter por carácter para efecto de streaming simulado (backup)."""
+    for char in text:
+        yield char
+        time.sleep(delay)
+
+
+def render_agentic_interview():
     """
-    Renderiza la interfaz de entrevista conversacional profesional.
-    Una pregunta a la vez con Enter para enviar.
+    Chatbot agéntico conversacional con streaming REAL del LLM para Fase 2.
+    Implementa streaming token-by-token desde el modelo de lenguaje.
     """
-    questions = st.session_state.get('interview_questions', [])
-    current_idx = st.session_state.get('chat_current_question', 0)
-    chat_history = st.session_state.get('chat_history', [])
+    from src.evaluator.core.agentic_interviewer import AgenticInterviewer
     
-    if not questions:
-        st.error("No hay preguntas para la entrevista")
+    # Obtener estado de la entrevista
+    phase1_result = st.session_state.get('phase1_result')
+    user_name = st.session_state.get('user_id', 'candidato')
+    cv_context = st.session_state.get('cv_text', '')
+    
+    if not phase1_result:
+        st.error("No hay resultados de Fase 1 disponibles")
         return
     
-    total_questions = len(questions)
+    # Inicializar entrevistador agéntico si no existe
+    if 'agentic_interviewer' not in st.session_state:
+        st.session_state['agentic_interviewer'] = AgenticInterviewer(
+            provider=st.session_state.get('provider', 'openai'),
+            model_name=st.session_state.get('model_name', 'gpt-4'),
+            api_key=st.session_state.get('api_key'),
+            temperature=0.7
+        )
+        # Inicializar entrevista
+        st.session_state['agentic_interviewer'].initialize_interview(
+            candidate_name=user_name,
+            phase1_result=phase1_result,
+            cv_context=cv_context
+        )
+        st.session_state['agentic_chat_state'] = 'greeting'
+        st.session_state['agentic_current_q'] = 0
+        st.session_state['agentic_history'] = []
     
-    # Header con progreso
-    st.markdown("### Entrevista con el Candidato")
+    interviewer: AgenticInterviewer = st.session_state['agentic_interviewer']
+    state = interviewer.get_state()
+    current_idx = st.session_state.get('agentic_current_q', 0)
+    chat_history = st.session_state.get('agentic_history', [])
+    total_questions = state['total_requirements']
+    chat_state = st.session_state.get('agentic_chat_state', 'greeting')
     
-    # Barra de progreso visual
-    if total_questions > 0:
-        progress = current_idx / total_questions
-    else:
-        progress = 0
-        
-    st.progress(progress)
+    # CSS para el chat agéntico moderno
     st.markdown(f"""
-    <div class="chat-progress">
-        Progreso: {current_idx} de {total_questions} preguntas completadas
+    <style>
+        .agent-header {{
+            background: linear-gradient(135deg, {VELORA_PRIMARY}12 0%, {VELORA_SECONDARY}08 100%);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid {VELORA_PRIMARY};
+        }}
+        .agent-avatar {{
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, {VELORA_PRIMARY}, {VELORA_SECONDARY});
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-right: 0.75rem;
+        }}
+        .agent-message {{
+            background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f4 100%);
+            border-radius: 0 16px 16px 16px;
+            padding: 1rem 1.25rem;
+            margin: 0.75rem 0;
+            max-width: 88%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border-left: 3px solid {VELORA_PRIMARY}40;
+        }}
+        .user-message {{
+            background: linear-gradient(135deg, {VELORA_PRIMARY}15 0%, {VELORA_SECONDARY}20 100%);
+            border-radius: 16px 16px 0 16px;
+            padding: 1rem 1.25rem;
+            margin: 0.75rem 0 1rem auto;
+            max-width: 85%;
+            margin-left: auto;
+            text-align: right;
+            border-right: 3px solid {VELORA_PRIMARY};
+        }}
+        .progress-pills {{
+            display: flex;
+            gap: 6px;
+            margin: 0.5rem 0;
+        }}
+        .progress-pill {{
+            width: 24px;
+            height: 6px;
+            border-radius: 3px;
+            background: #e0e0e0;
+            transition: all 0.3s ease;
+        }}
+        .progress-pill.completed {{ background: linear-gradient(90deg, {VELORA_PRIMARY}, {VELORA_SECONDARY}); }}
+        .progress-pill.current {{ background: {VELORA_PRIMARY}; animation: pulse 1.5s ease-in-out infinite; }}
+        @keyframes pulse {{
+            0%, 100% {{ opacity: 0.6; }}
+            50% {{ opacity: 1; }}
+        }}
+        .streaming-cursor {{
+            display: inline-block;
+            width: 2px;
+            height: 1em;
+            background: {VELORA_PRIMARY};
+            animation: blink 1s infinite;
+            margin-left: 2px;
+        }}
+        @keyframes blink {{
+            0%, 50% {{ opacity: 1; }}
+            51%, 100% {{ opacity: 0; }}
+        }}
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Header del agente
+    st.markdown(f"""
+    <div class="agent-header">
+        <div style="display: flex; align-items: center;">
+            <div class="agent-avatar">V</div>
+            <div>
+                <p style="margin: 0; font-weight: 600; color: {VELORA_DARK}; font-size: 1rem;">Asistente de Entrevista Velora</p>
+                <p style="margin: 0.15rem 0 0 0; color: {VELORA_GRAY}; font-size: 0.8rem;">
+                    Evaluando {total_questions} requisitos pendientes • Streaming en tiempo real 🔴
+                </p>
+            </div>
+        </div>
+        <div class="progress-pills" style="margin-top: 0.75rem;">
+            {"".join([f'<div class="progress-pill {"completed" if i < current_idx else "current" if i == current_idx else ""}"></div>' for i in range(total_questions)])}
+        </div>
     </div>
     """, unsafe_allow_html=True)
     
-    # Contenedor del chat
-    chat_container = st.container()
-    
-    with chat_container:
-        # Mostrar historial de chat
-        for entry in chat_history:
+    # Mostrar historial de conversación
+    for entry in chat_history:
+        if entry['role'] == 'assistant':
             st.markdown(f"""
-            <div class="chat-message-system">
-                <strong>Pregunta {entry['question_num']}/{total_questions}:</strong> {entry['question']}<br>
-                <small style="color:{VELORA_GRAY};">Requisito: {entry['requirement']} | Tipo: {entry['type']}</small>
+            <div class="agent-message">
+                <p style="margin: 0; color: #333; font-size: 0.95rem;">{entry['content']}</p>
+                {f'<p style="margin: 0.5rem 0 0 0; font-size: 0.7rem; color: #888; font-style: italic;">Evaluando: {entry["requirement"]}</p>' if entry.get('requirement') else ''}
             </div>
             """, unsafe_allow_html=True)
-            
+        else:
             st.markdown(f"""
-            <div class="chat-message-user">
-                <strong>Respuesta:</strong> {entry['answer']}
+            <div class="user-message">
+                <p style="margin: 0; color: #333;">{entry['content']}</p>
             </div>
             """, unsafe_allow_html=True)
     
-    # Si aún hay preguntas pendientes
-    if current_idx < total_questions:
-        current_question = questions[current_idx]
+    # === FASE: SALUDO ===
+    if chat_state == 'greeting':
+        st.markdown('<div class="agent-message">', unsafe_allow_html=True)
+        message_container = st.empty()
         
-        st.markdown("---")
+        # Streaming REAL del LLM
+        full_greeting = ""
+        try:
+            for token in interviewer.stream_greeting():
+                full_greeting += token
+                message_container.markdown(f"**{full_greeting}**<span class='streaming-cursor'></span>", unsafe_allow_html=True)
+            message_container.markdown(f"**{full_greeting}**")
+        except Exception as e:
+            full_greeting = f"¡Hola {user_name}! 👋 He revisado tu CV y tengo {total_questions} pregunta(s) que necesito hacerte. ¿Comenzamos?"
+            message_container.markdown(f"**{full_greeting}**")
         
-        # Mostrar pregunta actual
-        req_type_val = current_question.requirement_type.value if hasattr(current_question.requirement_type, 'value') else str(current_question.requirement_type)
-        tipo_text = format_requirement_type_text(req_type_val)
+        st.markdown('</div>', unsafe_allow_html=True)
         
-        st.markdown(f"""
-        <div class="chat-message-system">
-            <strong>Pregunta {current_idx + 1}/{total_questions}:</strong> {current_question.question}<br>
-            <small style="color:{VELORA_GRAY};">Requisito: {current_question.requirement_description} | Tipo: {tipo_text}</small>
-        </div>
-        """, unsafe_allow_html=True)
+        # Guardar en historial y cambiar estado
+        chat_history.append({'role': 'assistant', 'content': full_greeting})
+        st.session_state['agentic_history'] = chat_history
+        st.session_state['agentic_chat_state'] = 'questioning'
+        time.sleep(0.8)
+        st.rerun()
+    
+    # === FASE: PREGUNTAS ===
+    elif chat_state == 'questioning' and current_idx < total_questions:
+        # Verificar si necesitamos hacer streaming de la pregunta
+        streaming_key = f'streamed_agentic_q_{current_idx}'
         
-        # Input para respuesta - Form con Enter para enviar
-        with st.form(key=f"chat_form_{current_idx}", clear_on_submit=False):
-            answer = st.text_input(
-                "Tu respuesta:",
-                placeholder="Escribe tu respuesta y presiona Enter para enviar...",
-                key=f"chat_input_{current_idx}"
-            )
+        if not st.session_state.get(streaming_key):
+            st.markdown('<div class="agent-message">', unsafe_allow_html=True)
+            question_container = st.empty()
             
-            _, col_btn = st.columns([3, 1])
-            with col_btn:
-                submit = st.form_submit_button("Enviar", type="primary")
-        
-        if submit:
-            if answer.strip():
+            # Streaming REAL de la pregunta desde el LLM
+            full_question = ""
+            current_req = state['pending_requirements'][current_idx] if current_idx < len(state['pending_requirements']) else None
+            
+            try:
+                for token in interviewer.stream_question(current_idx):
+                    full_question += token
+                    question_container.markdown(f"**{full_question}**<span class='streaming-cursor'></span>", unsafe_allow_html=True)
+                question_container.markdown(f"**{full_question}**")
+            except Exception as e:
+                req_desc = current_req['description'] if current_req else "este requisito"
+                full_question = f"¿Podrías contarme sobre tu experiencia con {req_desc}?"
+                question_container.markdown(f"**{full_question}**")
+            
+            if current_req:
+                st.markdown(f"""
+                <p style="margin: 0.5rem 0 0 0; font-size: 0.7rem; color: #888; font-style: italic;">
+                    Requisito: {current_req['description']}
+                </p>
+                """, unsafe_allow_html=True)
+            
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            # Guardar pregunta en historial
+            chat_history.append({
+                'role': 'assistant',
+                'content': full_question,
+                'requirement': current_req['description'] if current_req else ''
+            })
+            st.session_state['agentic_history'] = chat_history
+            st.session_state[streaming_key] = True
+            st.session_state['current_question_text'] = full_question
+            time.sleep(0.3)
+            st.rerun()
+        else:
+            # Mostrar pregunta guardada
+            current_req = state['pending_requirements'][current_idx] if current_idx < len(state['pending_requirements']) else None
+            saved_question = st.session_state.get('current_question_text', '')
+            
+            # Input para respuesta
+            with st.form(key=f"agentic_form_{current_idx}", clear_on_submit=True):
+                answer = st.text_area(
+                    "Tu respuesta:",
+                    placeholder="Escribe tu respuesta aquí...",
+                    key=f"agentic_input_{current_idx}",
+                    label_visibility="collapsed",
+                    height=100
+                )
+                
+                col1, col2, col3 = st.columns([2, 1, 2])
+                with col2:
+                    submit = st.form_submit_button("Enviar", type="primary", use_container_width=True)
+            
+            if submit and answer.strip():
+                # Registrar respuesta en el agente
+                interviewer.register_response(current_idx, answer.strip())
+                
+                # Agregar al historial visual
                 chat_history.append({
-                    'question_num': current_idx + 1,
-                    'question': current_question.question,
-                    'requirement': current_question.requirement_description,
-                    'type': tipo_text,
-                    'answer': answer.strip(),
-                    'requirement_type': current_question.requirement_type
+                    'role': 'user',
+                    'content': answer.strip()
                 })
+                st.session_state['agentic_history'] = chat_history
+                st.session_state['agentic_current_q'] = current_idx + 1
                 
-                st.session_state['chat_history'] = chat_history
-                st.session_state['chat_current_question'] = current_idx + 1
-                
+                # Verificar si terminamos
                 if current_idx + 1 >= total_questions:
-                    st.session_state['chat_interview_complete'] = True
+                    st.session_state['agentic_chat_state'] = 'closing'
                 
                 st.rerun()
-            else:
-                st.error("Por favor, escribe una respuesta antes de continuar.")
+            elif submit:
+                st.warning("Por favor, escribe una respuesta antes de continuar.")
     
-    else:
-        # Todas las preguntas completadas
-        st.success("Entrevista completada. Todas las preguntas han sido respondidas.")
-        
-        if st.button("Generar Resultado Final", type="primary"):
+    # === FASE: CIERRE ===
+    elif chat_state == 'closing':
+        if not st.session_state.get('agentic_closing_shown'):
+            st.markdown('<div class="agent-message">', unsafe_allow_html=True)
+            closing_container = st.empty()
+            
+            # Streaming REAL del cierre
+            full_closing = ""
+            try:
+                for token in interviewer.stream_closing():
+                    full_closing += token
+                    closing_container.markdown(f"**{full_closing}**<span class='streaming-cursor'></span>", unsafe_allow_html=True)
+                closing_container.markdown(f"**{full_closing}**")
+            except Exception:
+                full_closing = f"¡Perfecto, {user_name}! 🎉 Gracias por tus respuestas. Ahora procesaré la información para completar tu evaluación."
+                closing_container.markdown(f"**{full_closing}**")
+            
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            chat_history.append({'role': 'assistant', 'content': full_closing})
+            st.session_state['agentic_history'] = chat_history
+            st.session_state['agentic_closing_shown'] = True
             st.session_state['chat_interview_complete'] = True
+            
+            # Preparar respuestas formateadas para evaluación
+            st.session_state['interview_responses_formatted'] = interviewer.get_interview_responses()
+            
+            time.sleep(1)
             st.rerun()
+        else:
+            # Ya mostrado el cierre, marcar como completo
+            if not st.session_state.get('chat_interview_complete'):
+                st.session_state['chat_interview_complete'] = True
+                st.rerun()
 
 
 def get_or_create_evaluator():
@@ -1406,7 +1737,7 @@ def main():
                 st.error(f"No hay modelos para {provider}")
         
         st.markdown("---")
-        st.caption("Este sistema evalúa candidatos mediante análisis automático de CV vs Oferta con IA.")
+        st.caption("En caso de que se necesite información adicional, contáctenme sin problema o visiten el repositorio de GitHub :)")
     
     # Si no hay API key, mostrar contenido limitado (sin st.stop())
     if not api_key_valid:
@@ -1568,7 +1899,12 @@ def main():
         
         can_evaluate = bool(cv_text and job_offer_text)
         
-        if st.button("Iniciar Evaluación", type="primary", disabled=not can_evaluate):
+        # Botón centrado
+        _, col_btn_eval, _ = st.columns([1, 2, 1])
+        with col_btn_eval:
+            start_eval = st.button("Iniciar Evaluación", type="primary", disabled=not can_evaluate, use_container_width=True)
+        
+        if start_eval:
             if not cv_text:
                 st.error("Proporciona el CV del candidato")
                 st.stop()
@@ -1577,11 +1913,18 @@ def main():
                 st.error("Proporciona la oferta de empleo")
                 st.stop()
             
-            # Resetear estado
-            for key in ['evaluation_saved', 'evaluation_completed', 'phase2_started', 
-                        'phase1_completed', 'chat_current_question', 'chat_history', 
-                        'chat_interview_complete', 'interview_questions']:
-                if key in st.session_state:
+            # Resetear estado completo (incluye todos los estados del agente)
+            keys_to_reset = [
+                'evaluation_saved', 'evaluation_completed', 'phase2_started', 
+                'phase1_completed', 'chat_interview_complete',
+                # Estados del nuevo agente
+                'agentic_interviewer', 'agentic_chat_state', 'agentic_current_q',
+                'agentic_history', 'agentic_closing_shown', 'interview_responses_formatted',
+                'current_question_text'
+            ]
+            # Eliminar claves de streaming y estados temporales
+            for key in list(st.session_state.keys()):
+                if key in keys_to_reset or key.startswith('streamed_agentic_q_'):
                     del st.session_state[key]
             
             st.session_state['cv_text'] = cv_text
@@ -1681,48 +2024,46 @@ def main():
                 st.info(f"Se encontraron **{len(phase1_result.missing_requirements)} requisito(s)** no verificables en el CV. "
                         f"Inicia una entrevista conversacional para obtener más información.")
                 
-                if st.button("Iniciar Entrevista", type="primary"):
-                    evaluator = get_or_create_evaluator()
-                    if evaluator:
-                        with st.spinner("Generando preguntas..."):
-                            questions = evaluator.phase2_interviewer.generate_questions(
-                                phase1_result.missing_requirements,
-                                phase1_result,
-                                st.session_state.get('cv_text', '')
-                            )
-                            st.session_state['interview_questions'] = questions
-                            st.session_state['chat_current_question'] = 0
-                            st.session_state['chat_history'] = []
-                            st.session_state['phase2_started'] = True
-                        st.rerun()
-                    else:
-                        st.error("Error al recuperar el evaluador. Recarga la página.")
+                # Botón centrado
+                _, col_btn_int, _ = st.columns([1, 2, 1])
+                with col_btn_int:
+                    start_interview = st.button("Iniciar Entrevista Conversacional", type="primary", use_container_width=True)
+                
+                if start_interview:
+                    # Limpiar estados previos del agente
+                    keys_to_clean = [
+                        'agentic_interviewer', 'agentic_chat_state', 'agentic_current_q',
+                        'agentic_history', 'agentic_closing_shown', 'interview_responses_formatted'
+                    ]
+                    for key in list(st.session_state.keys()):
+                        if key in keys_to_clean or key.startswith('streamed_agentic_q_'):
+                            del st.session_state[key]
+                    
+                    st.session_state['phase2_started'] = True
+                    st.rerun()
         
         # ===================================================================
         # FASE 2: Entrevista conversacional
         # ===================================================================
         if st.session_state.get('phase2_started') and not st.session_state.get('evaluation_completed'):
             st.markdown("---")
-            render_chat_interview()
+            render_agentic_interview()
             
             if st.session_state.get('chat_interview_complete'):
                 phase1_result = st.session_state['phase1_result']
                 evaluator = get_or_create_evaluator()
-                chat_history = st.session_state.get('chat_history', [])
                 
-                if evaluator:
+                # Obtener respuestas del agente o del formato legacy
+                formatted_responses = st.session_state.get('interview_responses_formatted')
+                
+                if not formatted_responses:
+                    # Fallback: intentar obtener del agente
+                    interviewer = st.session_state.get('agentic_interviewer')
+                    if interviewer:
+                        formatted_responses = interviewer.get_interview_responses()
+                
+                if evaluator and formatted_responses:
                     with st.spinner("Procesando entrevista y generando resultado final..."):
-                        
-                        formatted_responses = [
-                            InterviewResponse(
-                                question=entry['question'],
-                                answer=entry['answer'],
-                                requirement_description=entry['requirement'],
-                                requirement_type=entry['requirement_type']
-                            )
-                            for entry in chat_history
-                        ]
-                        
                         resultado = evaluator.reevaluate_with_interview(phase1_result, formatted_responses)
                         
                         st.session_state['evaluation_result'] = resultado
@@ -1731,6 +2072,8 @@ def main():
                     
                     st.success("Evaluación completada")
                     st.rerun()
+                elif not formatted_responses:
+                    st.error("No se encontraron respuestas de la entrevista.")
                 else:
                     st.error("Error crítico: Sesión perdida. Recargue la página.")
         
@@ -1771,12 +2114,16 @@ def main():
                     st.error(f"Error al guardar: {str(e)}")
             
             st.markdown("---")
-            if st.button("Nueva Evaluación"):
-                keys_to_keep = ['user_id', 'provider', 'model_name', 'api_key', 'last_url']
-                keys_to_clear = [k for k in st.session_state.keys() if k not in keys_to_keep]
-                for key in keys_to_clear:
-                    del st.session_state[key]
-                st.rerun()
+            
+            # Botón centrado con estilo consistente
+            _, col_btn_new, _ = st.columns([1, 2, 1])
+            with col_btn_new:
+                if st.button("Nueva Evaluación", type="primary", use_container_width=True):
+                    keys_to_keep = ['user_id', 'provider', 'model_name', 'api_key', 'last_url']
+                    keys_to_clear = [k for k in st.session_state.keys() if k not in keys_to_keep]
+                    for key in keys_to_clear:
+                        del st.session_state[key]
+                    st.rerun()
     
     with tab2:
         st.markdown("### Mi Historial de Evaluaciones")
@@ -1820,6 +2167,9 @@ def main():
                 
                 display_evals = sorted(evaluations, key=lambda x: x.get('timestamp', ''), reverse=True)
                 
+                # Contenedor del historial con spacing compacto
+                st.markdown('<div class="history-container">', unsafe_allow_html=True)
+                
                 for i, eval_data in enumerate(display_evals[:10], 1):
                     title = eval_data.get('job_offer_title', 'Oferta de empleo')
                     score = eval_data.get('score', 0)
@@ -1830,48 +2180,67 @@ def main():
                         
                     phase = eval_data.get('phase_completed', 'phase1')
                     
-                    # Determinar color según estado
+                    # Determinar clase CSS según estado
                     if status == "approved":
-                        status_class = "status-approved"
-                        status_label = "Aprobado"
-                        bg_style = "linear-gradient(90deg, rgba(76, 175, 80, 0.18) 0%, rgba(76, 175, 80, 0.06) 100%)"
-                        border_color = "#4CAF50"
+                        item_class = "history-item-approved"
+                        status_card_class = "status-approved"
+                        status_label = "APROBADO"
                     elif status == "rejected":
-                        status_class = "status-rejected"
-                        status_label = "Rechazado"
-                        bg_style = "linear-gradient(90deg, rgba(244, 67, 54, 0.18) 0%, rgba(244, 67, 54, 0.06) 100%)"
-                        border_color = "#EF5350"
+                        item_class = "history-item-rejected"
+                        status_card_class = "status-rejected"
+                        status_label = "RECHAZADO"
                     else:
-                        status_class = "status-phase1"
-                        status_label = "Solo Fase 1"
-                        bg_style = "linear-gradient(90deg, rgba(0, 180, 216, 0.15) 0%, rgba(0, 180, 216, 0.06) 100%)"
-                        border_color = "#00B4D8"
+                        item_class = "history-item-phase1"
+                        status_card_class = "status-phase1"
+                        status_label = "FASE 1"
+                    
+                    # Clase para fase
+                    phase_card_class = "status-phase2" if phase == "phase2" else "status-phase1"
+                    phase_label = "FASE 2" if phase == "phase2" else "FASE 1"
                     
                     # Título del expander
-                    expander_title = f"#{i} · {title[:45]}... · {score:.1f}% · {timestamp}"
+                    expander_title = f"#{i} · {title[:40]}... · {score:.1f}% · {timestamp}"
                     
-                    # Contenedor con estilo de color
-                    st.markdown(f'''<div style="
-                        background: {bg_style};
-                        border-left: 5px solid {border_color};
-                        border-radius: 10px;
-                        margin-bottom: 0.5rem;
-                        overflow: hidden;
-                    ">''', unsafe_allow_html=True)
+                    # Contenedor con degradado según estado
+                    st.markdown(f'<div class="history-item {item_class}">', unsafe_allow_html=True)
                     
                     with st.expander(expander_title):
-                        # Estado y fase con tamaños consistentes y alineados
+                        # Grid de métricas uniformes
                         met1, met2, met3, met4 = st.columns(4)
+                        
                         with met1:
-                            st.metric("Puntuación", f"{score:.1f}%")
+                            st.markdown(f'''
+                            <div class="history-metric-card">
+                                <div class="history-metric-label">Puntuación</div>
+                                <div class="history-metric-value">{score:.1f}%</div>
+                            </div>
+                            ''', unsafe_allow_html=True)
+                        
                         with met2:
-                            st.markdown(f'<div class="{status_class}">{status_label}</div>', unsafe_allow_html=True)
+                            st.markdown(f'''
+                            <div class="history-metric-card {status_card_class}">
+                                <div class="history-metric-label">Estado</div>
+                                <div class="history-metric-value">{status_label}</div>
+                            </div>
+                            ''', unsafe_allow_html=True)
+                        
                         with met3:
-                            phase_class = "status-approved" if phase == "phase2" else "status-phase1"
-                            phase_label = "Fase 2" if phase == "phase2" else "Fase 1"
-                            st.markdown(f'<div class="{phase_class}">{phase_label}</div>', unsafe_allow_html=True)
+                            st.markdown(f'''
+                            <div class="history-metric-card {phase_card_class}">
+                                <div class="history-metric-label">Fase</div>
+                                <div class="history-metric-value">{phase_label}</div>
+                            </div>
+                            ''', unsafe_allow_html=True)
+                        
                         with met4:
-                            st.metric("Requisitos", f"{eval_data.get('fulfilled_count', 0)}/{eval_data.get('total_requirements', 0)}")
+                            fulfilled = eval_data.get('fulfilled_count', 0)
+                            total = eval_data.get('total_requirements', 0)
+                            st.markdown(f'''
+                            <div class="history-metric-card">
+                                <div class="history-metric-label">Requisitos</div>
+                                <div class="history-metric-value">{fulfilled}/{total}</div>
+                            </div>
+                            ''', unsafe_allow_html=True)
                         
                         st.markdown("---")
                         col1, col2 = st.columns(2)
@@ -1879,7 +2248,7 @@ def main():
                             st.markdown("**Detalles:**")
                             st.write(f"• Obligatorios: {eval_data.get('obligatory_requirements', 0)}")
                             st.write(f"• Opcionales: {eval_data.get('optional_requirements', 0)}")
-                            st.write(f"• Cumplidos: {eval_data.get('fulfilled_count', 0)}")
+                            st.write(f"• Cumplidos: {fulfilled}")
                         with col2:
                             st.markdown("**Info:**")
                             st.write(f"• Fecha: {timestamp}")
@@ -1893,16 +2262,19 @@ def main():
                         if eval_data.get('rejection_reason'):
                             st.error(f"**Razón de rechazo:** {eval_data.get('rejection_reason')}")
                     
-                    # Cerrar contenedor de color
                     st.markdown('</div>', unsafe_allow_html=True)
+                
+                # Cerrar contenedor del historial
+                st.markdown('</div>', unsafe_allow_html=True)
                 
                 st.markdown("---")
                 st.markdown("#### Asistente de Historial")
-                st.info("Pregunta lo que quieras sobre tu historial de evaluaciones.")
+                st.caption("Consulta información sobre tu historial de evaluaciones.")
                 
+                # Input para consulta directa
                 query = st.text_input(
                     "Consulta",
-                    placeholder="Ej: ¿Por qué fui rechazado? ¿Cuál es mi puntuación promedio? (Presiona Enter)",
+                    placeholder="Ej: ¿Por qué fui rechazado? ¿Cuál es mi puntuación promedio?",
                     key="rag_query",
                     label_visibility="collapsed"
                 )

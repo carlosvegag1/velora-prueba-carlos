@@ -2,6 +2,10 @@
 Evaluador Principal del Sistema
 Orquesta las dos fases del proceso de evaluación de candidatos.
 Incluye integración con LangSmith para trazabilidad y feedback.
+
+ARQUITECTURA v2.0:
+- Fase 1: Análisis automático de CV vs Oferta
+- Fase 2: Entrevista conversacional agéntica con streaming
 """
 
 from typing import Optional
@@ -9,7 +13,7 @@ from langchain_core.language_models import BaseChatModel
 
 from ..models import EvaluationResult, Phase1Result, Requirement, RequirementType
 from .analyzer import Phase1Analyzer
-from .interviewer import Phase2Interviewer
+from .agentic_interviewer import AgenticInterviewer
 from ..processing import load_text_file, calculate_score
 from ..llm.factory import configure_langsmith, get_langsmith_client
 
@@ -19,8 +23,8 @@ class CandidateEvaluator:
     Sistema completo de evaluación de candidatos basado en LangChain.
     
     Coordina las dos fases:
-    1. Análisis de oferta y CV
-    2. Entrevista interactiva (si es necesario)
+    1. Análisis de oferta y CV (Phase1Analyzer)
+    2. Entrevista conversacional agéntica con streaming (AgenticInterviewer)
     """
     
     def __init__(
@@ -28,7 +32,7 @@ class CandidateEvaluator:
         provider: str = "openai",
         model_name: str = "gpt-4",
         temperature_phase1: float = 0.1,
-        temperature_phase2: float = 0.3,
+        temperature_phase2: float = 0.7,
         llm_phase1: Optional[BaseChatModel] = None,
         llm_phase2: Optional[BaseChatModel] = None,
         api_key: Optional[str] = None,
@@ -39,12 +43,12 @@ class CandidateEvaluator:
         
         Args:
             provider: Proveedor del LLM ('openai', 'google', 'anthropic')
-            model_name: Nombre del modelo a usar (por defecto gpt-4)
+            model_name: Nombre del modelo a usar
             temperature_phase1: Temperatura para Fase 1 (baja para precisión)
-            temperature_phase2: Temperatura para Fase 2 (más alta para conversación)
+            temperature_phase2: Temperatura para Fase 2 (alta para conversación natural)
             llm_phase1: LLM personalizado para Fase 1 (opcional)
             llm_phase2: LLM personalizado para Fase 2 (opcional)
-            api_key: API key del proveedor (opcional)
+            api_key: API key del proveedor
             enable_langsmith: Si habilitar LangSmith para trazabilidad
         """
         # Configurar LangSmith si está habilitado
@@ -53,10 +57,13 @@ class CandidateEvaluator:
             langsmith = configure_langsmith()
             self._langsmith_enabled = langsmith is not None
         
-        # Almacenar el último run_id para feedback
+        # Almacenar configuración para recrear componentes
+        self._provider = provider
+        self._model_name = model_name
+        self._api_key = api_key
         self._last_run_id: Optional[str] = None
         
-        # Inicializar componentes
+        # Inicializar Fase 1: Analizador
         self.phase1_analyzer = Phase1Analyzer(
             llm=llm_phase1,
             provider=provider,
@@ -65,7 +72,8 @@ class CandidateEvaluator:
             api_key=api_key
         )
         
-        self.phase2_interviewer = Phase2Interviewer(
+        # Inicializar Fase 2: Entrevistador Agéntico
+        self.phase2_interviewer = AgenticInterviewer(
             llm=llm_phase2,
             provider=provider,
             model_name=model_name,
@@ -143,17 +151,75 @@ class CandidateEvaluator:
             )
         
         # FASE 2: Entrevista interactiva
-        interview_responses = self.phase2_interviewer.conduct_interview(
-            phase1_result,
-            cv,
-            interactive=interactive,
-            candidate_responses=candidate_responses
-        )
+        # Nota: En el flujo normal con streaming, la entrevista se maneja desde el frontend.
+        # Este método soporta el modo no-interactivo con respuestas predefinidas.
         
-        # Re-evaluar con las respuestas de la entrevista
+        if not interactive and candidate_responses:
+            # Modo batch: usar respuestas predefinidas
+            interview_responses = self._conduct_batch_interview(
+                phase1_result, cv, candidate_responses
+            )
+        else:
+            # En modo interactivo, el frontend maneja el streaming
+            # Retornamos indicando que se necesita Fase 2
+            return EvaluationResult(
+                phase1_result=phase1_result,
+                phase2_completed=False,
+                interview_responses=[],
+                final_score=phase1_result.score,
+                final_fulfilled_requirements=phase1_result.fulfilled_requirements,
+                final_unfulfilled_requirements=phase1_result.unfulfilled_requirements,
+                final_discarded=False,
+                evaluation_summary="Pendiente: Completar entrevista interactiva (Fase 2)"
+            )
+        
+        # Re-evaluar con las respuestas
         final_result = self.reevaluate_with_interview(phase1_result, interview_responses)
         
         return final_result
+    
+    def _conduct_batch_interview(
+        self,
+        phase1_result: Phase1Result,
+        cv: str,
+        candidate_responses: list
+    ) -> list:
+        """
+        Realiza la entrevista en modo batch (no interactivo).
+        
+        Args:
+            phase1_result: Resultado de Fase 1
+            cv: Texto del CV
+            candidate_responses: Respuestas predefinidas
+            
+        Returns:
+            Lista de InterviewResponse
+        """
+        from ..models import InterviewResponse
+        
+        # Inicializar el entrevistador
+        self.phase2_interviewer.initialize_interview(
+            candidate_name="candidato",
+            phase1_result=phase1_result,
+            cv_context=cv
+        )
+        
+        state = self.phase2_interviewer.get_state()
+        responses = []
+        
+        for i, req in enumerate(state["pending_requirements"]):
+            response_text = candidate_responses[i] if i < len(candidate_responses) else ""
+            
+            self.phase2_interviewer.register_response(i, response_text)
+            
+            responses.append(InterviewResponse(
+                question=f"Pregunta sobre: {req['description']}",
+                answer=response_text,
+                requirement_description=req['description'],
+                requirement_type=RequirementType(req['type'])
+            ))
+        
+        return responses
     
     def reevaluate_with_interview(
         self,

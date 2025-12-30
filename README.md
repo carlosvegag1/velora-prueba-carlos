@@ -30,6 +30,9 @@ source venv/bin/activate # Linux/Mac
 
 # Instalar dependencias
 pip install -r requirements.txt
+
+# Instalar navegador para scraping de URLs protegidas (anti-bot)
+playwright install chromium
 ```
 
 ## Configuración
@@ -224,6 +227,7 @@ for doc in chatbot.last_retrieved_docs:
 - `faiss-cpu` - Embeddings semánticos
 - `streamlit` - Interfaz web
 - `pydantic` - Validación de datos
+- `playwright` - Scraping avanzado con navegador headless (anti-bot)
 
 ## Licencia
 

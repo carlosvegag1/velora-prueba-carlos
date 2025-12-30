@@ -294,8 +294,11 @@ def _scrape_with_browser(url: str) -> Dict[str, Any]:
     import tempfile
     import os
     
+    # Script mejorado con técnicas anti-detección de bots
     script = '''
 import sys
+import time
+import random
 from playwright.sync_api import sync_playwright
 
 url = sys.argv[1]
@@ -303,12 +306,68 @@ output_file = sys.argv[2]
 
 try:
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        context = browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        # Lanzar navegador con args anti-detección
+        browser = p.chromium.launch(
+            headless=True,
+            args=[
+                "--disable-blink-features=AutomationControlled",
+                "--disable-dev-shm-usage",
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-infobars",
+                "--window-size=1920,1080",
+                "--start-maximized"
+            ]
         )
+        
+        # Crear contexto con configuración realista
+        context = browser.new_context(
+            viewport={"width": 1920, "height": 1080},
+            user_agent=(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/121.0.0.0 Safari/537.36"
+            ),
+            locale="es-ES",
+            timezone_id="Europe/Madrid",
+            extra_http_headers={
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
+                "Accept-Encoding": "gzip, deflate, br",
+                "Connection": "keep-alive",
+                "Upgrade-Insecure-Requests": "1",
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "none",
+                "Sec-Fetch-User": "?1",
+                "Cache-Control": "max-age=0"
+            }
+        )
+        
         page = context.new_page()
-        page.goto(url, timeout=30000, wait_until="networkidle")
+        
+        # Evadir detección de webdriver
+        page.add_init_script("""
+            Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+            Object.defineProperty(navigator, 'plugins', {get: () => [1, 2, 3, 4, 5]});
+            Object.defineProperty(navigator, 'languages', {get: () => ['es-ES', 'es', 'en']});
+            window.chrome = { runtime: {} };
+        """)
+        
+        # Navegar con espera extendida
+        page.goto(url, timeout=45000, wait_until="networkidle")
+        
+        # Simular comportamiento humano
+        time.sleep(random.uniform(1.5, 3.0))
+        
+        # Scroll gradual para cargar contenido dinámico
+        page.evaluate("window.scrollTo(0, document.body.scrollHeight / 3)")
+        time.sleep(random.uniform(0.5, 1.0))
+        page.evaluate("window.scrollTo(0, document.body.scrollHeight / 2)")
+        time.sleep(random.uniform(0.5, 1.0))
+        page.evaluate("window.scrollTo(0, 0)")
+        time.sleep(random.uniform(0.3, 0.7))
+        
         html = page.content()
         browser.close()
     
@@ -331,12 +390,12 @@ except Exception as e:
         with open(script_path, 'w', encoding='utf-8') as f:
             f.write(script)
         
-        # Ejecutar en subprocess
+        # Ejecutar en subprocess con timeout extendido
         result = subprocess.run(
             [sys.executable, script_path, url, output_path],
             capture_output=True,
             text=True,
-            timeout=60
+            timeout=90
         )
         
         # Limpiar script
@@ -402,9 +461,10 @@ def scrape_job_offer_url(
     if result["success"]:
         return result["text"]
     
-    # Fallback a navegador si corresponde
-    if enable_browser_fallback and result["error"] in {"JS_RENDERED", "NO_CONTENT", "NOT_JOB_OFFER"}:
-        logger.info("Intentando fallback con navegador headless")
+    # Fallback a navegador si corresponde (incluye BOT_BLOCKED)
+    fallback_errors = {"JS_RENDERED", "NO_CONTENT", "NOT_JOB_OFFER", "BOT_BLOCKED"}
+    if enable_browser_fallback and result["error"] in fallback_errors:
+        logger.info("Intentando fallback con navegador headless (error: %s)", result["error"])
         result = _scrape_with_browser(url)
         
         if result["success"]:
@@ -435,8 +495,9 @@ def scrape_job_offer_url_detailed(
     if result["success"]:
         return result
     
-    if enable_browser_fallback and result["error"] in {"JS_RENDERED", "NO_CONTENT", "NOT_JOB_OFFER"}:
-        logger.info("Intentando fallback con navegador headless")
+    fallback_errors = {"JS_RENDERED", "NO_CONTENT", "NOT_JOB_OFFER", "BOT_BLOCKED"}
+    if enable_browser_fallback and result["error"] in fallback_errors:
+        logger.info("Intentando fallback con navegador headless (error: %s)", result["error"])
         return _scrape_with_browser(url)
     
     return result

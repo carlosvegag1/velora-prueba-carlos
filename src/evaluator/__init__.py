@@ -4,7 +4,7 @@ Utiliza Structured Output para garantizar respuestas válidas del LLM.
 Incluye RAG para consultas inteligentes del historial.
 """
 
-from .core import CandidateEvaluator, Phase1Analyzer, Phase2Interviewer
+from .core import CandidateEvaluator, Phase1Analyzer, AgenticInterviewer
 from .models import (
     Requirement,
     RequirementType,
@@ -24,12 +24,12 @@ from .storage import UserMemory, EnrichedEvaluation, create_enriched_evaluation
 from .extraction import extract_text_from_pdf, scrape_job_offer_url
 from .rag import HistoryVectorStore, HistoryChatbot
 
-__version__ = "1.0.0"
+__version__ = "2.0.0"  # Agente conversacional con streaming real
 __all__ = [
     # Componentes principales
     "CandidateEvaluator",
     "Phase1Analyzer",
-    "Phase2Interviewer",
+    "AgenticInterviewer",
     # Modelos de datos
     "Requirement",
     "RequirementType",

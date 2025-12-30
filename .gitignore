@@ -41,3 +41,15 @@ build/
 # User data
 data/user_memory/
 data/checkpoints/
+data/vectors/
+
+# Cursor/IDE specific
+.cursor/
+
+# Temporary files
+*.tmp
+*_temp*
+
+# Debug files
+debug.log
+test_debug*.json
