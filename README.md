@@ -1,234 +1,107 @@
-# Sistema de Evaluación de Candidatos con LangChain
+# Velora - Sistema de Evaluación de Candidatos con IA
 
-Sistema de evaluación automática de candidatos mediante análisis de CVs y entrevistas interactivas con IA. Utiliza las capacidades más avanzadas de **LangChain** para garantizar respuestas válidas y fiables.
+> **Prueba técnica para Ingeniero de IA Generativa**  
+> Desarrollada por Carlos Vega | Diciembre 2024
 
-## Características Principales
+---
 
-### Core LangChain
-- **Structured Output**: Respuestas del LLM siempre válidas y tipadas con Pydantic
-- **Multi-proveedor**: Soporte para OpenAI, Google (Gemini) y Anthropic (Claude)
+## Cumplimiento de Requisitos
 
-### Vanguardia (Nuevas Características)
-- ** LangGraph**: Orquestación multi-agente para análisis estructurado
-- ** Embeddings Semánticos**: FAISS para búsqueda de evidencia en el CV
-- ** Niveles de Confianza**: Cada match incluye confianza (alta/media/baja) y razonamiento
-- ** LangSmith**: Trazabilidad completa y feedback loop para mejora continua
-- ** Streaming**: Progreso en tiempo real del análisis
-- ** RAG para Historial**: Chatbot inteligente para consultar tu historial de evaluaciones
+El sistema implementa **completamente** las dos fases especificadas:
 
-### Interfaz
-- **UI Streamlit**: Interfaz moderna con indicadores visuales de confianza
-- **Extracción de URLs/PDFs**: Descarga automática de ofertas de empleo
+| Requisito | Estado | Implementación |
+|-----------|--------|----------------|
+| Fase 1: Análisis CV vs Oferta | ✅ | Extracción de requisitos + matching con puntuación |
+| Requisitos obligatorios vs opcionales | ✅ | Flag `discarded` cuando falta obligatorio |
+| Puntuación proporcional | ✅ | `score = (cumplidos / total) * 100` |
+| Fase 2: Entrevista por requisitos faltantes | ✅ | Conversación para requisitos no encontrados |
+| Recalcular puntuación post-entrevista | ✅ | Reevaluación automática |
+| LangChain con proveedores intercambiables | ✅ | OpenAI, Google, Anthropic |
+| Proyecto ejecutable con dependencias | ✅ | `requirements.txt` |
+| Docker | ✅ | `Dockerfile` + `docker-compose.yml` |
+| Interfaz UI (valorable) | ✅ | Streamlit con diseño corporativo |
 
-## Instalación
+---
+
+## Valor Diferencial Aportado
+
+Más allá de los requisitos base, implementé funcionalidades adicionales para demostrar capacidades como ingeniero de IA:
+
+### Arquitectura
+- **Backend modular por capas**: Separación clara entre núcleo, orquestación, infraestructura
+- **Configuración centralizada**: Cambios sin tocar código de negocio
+- **Nomenclatura bilingüe**: Código en castellano con aliases en inglés para flexibilidad
+
+### Tecnologías Avanzadas de LangChain
+- **LangGraph**: Orquestación multi-agente con grafo de estados (activable/desactivable)
+- **LangSmith**: Trazabilidad completa de llamadas LLM
+- **Structured Output**: Respuestas garantizadas en formato Pydantic (sin parsing manual)
+
+### Funcionalidades Adicionales
+- **Embeddings semánticos con FAISS**: Búsqueda de evidencia en CV (opcional)
+- **RAG para historial**: Chatbot que consulta evaluaciones previas
+- **Hiperparametrización contextual**: Temperaturas diferenciadas por fase
+- **Streaming real**: Entrevista con generación token-by-token
+- **Scraping avanzado**: Playwright para URLs protegidas (LinkedIn, portales corporativos)
+- **Niveles de confianza**: Cada match incluye `high/medium/low` con razonamiento
+- **Logs operacionales**: Trazabilidad en tiempo real sin datos sensibles
+
+---
+
+## Quick Start
 
 ```bash
-# Crear entorno virtual
+# Instalación
 python -m venv venv
-source venv/bin/activate # Linux/Mac
-# o: venv\Scripts\activate # Windows
-
-# Instalar dependencias
+source venv/bin/activate  # Linux/Mac (o venv\Scripts\activate en Windows)
 pip install -r requirements.txt
 
-# Instalar navegador para scraping de URLs protegidas (anti-bot)
-playwright install chromium
+# Configurar API key
+cp env.example .env
+# Editar .env con OPENAI_API_KEY (o GOOGLE_API_KEY / ANTHROPIC_API_KEY)
+
+# Ejecutar
+streamlit run frontend/streamlit_app.py
 ```
 
-## Configuración
-
-Crea un archivo `.env` con tu API key:
-
-```env
-OPENAI_API_KEY=sk-...
-
-# Opcionales:
-# GOOGLE_API_KEY=...
-# ANTHROPIC_API_KEY=...
-# LANGSMITH_API_KEY=... # Para trazabilidad
-```
-
-## Uso
-
-### Interfaz Web (Streamlit)
-
+**Con Docker:**
 ```bash
-streamlit run app/streamlit_app.py
+docker compose up --build
 ```
 
-### Uso Programático
+Acceder a **http://localhost:8501**
 
-```python
-from src.evaluator import CandidateEvaluator
-from src.evaluator.core import Phase1Analyzer
-
-# Modo simple
-evaluator = CandidateEvaluator(
- provider="openai",
- model_name="gpt-4"
-)
-
-result = evaluator.evaluate_candidate(
- job_offer_text="Requisitos obligatorios: ...",
- cv_text="Experiencia: ..."
-)
-
-print(f"Puntuación: {result.final_score}%")
-print(f"Descartado: {result.final_discarded}")
-
-# Modo avanzado con LangGraph y Embeddings
-analyzer = Phase1Analyzer(
- provider="openai",
- model_name="gpt-4",
- use_semantic_matching=True, # Embeddings FAISS
- use_langgraph=True # Orquestación multi-agente
-)
-
-result = analyzer.analyze(job_offer_text, cv_text)
-
-# Acceder a confianza y razonamiento
-for req in result.fulfilled_requirements:
- print(f" {req.description}")
- print(f" Confianza: {req.confidence.value}")
- print(f" Razonamiento: {req.reasoning}")
- if req.semantic_score:
- print(f" Score semántico: {req.semantic_score:.2f}")
-```
-
-## Arquitectura
-
-```mermaid
-flowchart TB
- subgraph Input [Entrada]
- JobOffer[Oferta de Empleo]
- CV[Curriculum Vitae]
- end
- 
- subgraph Phase1Graph [Fase 1 - LangGraph]
- Extractor[Agente Extractor]
- Embedder[Semantic Embeddings]
- Matcher[Agente Matcher]
- Scorer[Agente Decisor]
- end
- 
- subgraph Phase2 [Fase 2]
- Interviewer[Entrevistador]
- end
- 
- subgraph Output [Salida]
- Results[Resultados + Confianza]
- end
- 
- JobOffer --> Extractor
- CV --> Embedder
- Extractor --> Embedder
- Embedder --> Matcher
- Matcher --> Scorer
- Scorer --> Phase2
- Phase2 --> Results
-```
+---
 
 ## Estructura del Proyecto
 
 ```
-src/evaluator/
-├── __init__.py
-├── models.py # Modelos Pydantic + ConfidenceLevel
-├── core/
-│ ├── evaluator.py # Orquestador principal + LangSmith
-│ ├── analyzer.py # Fase 1 con soporte LangGraph
-│ ├── graph.py # Definición del grafo LangGraph
-│ ├── embeddings.py # SemanticMatcher con FAISS
-│ └── interviewer.py # Fase 2: Entrevista
-├── llm/
-│ ├── factory.py # Factory multi-proveedor + LangSmith config
-│ └── prompts.py # Prompts con soporte de confianza
-├── extraction/
-│ ├── pdf.py # Extracción de PDFs
-│ └── url.py # Scraping de URLs
-├── processing/
-│ └── validation.py # Utilidades
-├── storage/
-│ └── memory.py # Persistencia + EnrichedEvaluation
-└── rag/
- ├── vectorstore.py # HistoryVectorStore con FAISS
- └── chatbot.py # HistoryChatbot RAG
+├── backend/
+│   ├── modelos.py              # Modelos Pydantic
+│   ├── nucleo/                 # Lógica: análisis, entrevista, historial
+│   ├── orquestacion/           # Coordinadores + LangGraph
+│   ├── infraestructura/        # LLM, embeddings, persistencia
+│   └── recursos/               # Prompts centralizados
+├── frontend/streamlit_app.py   # UI Streamlit
+├── docs/
+│   ├── DOCUMENTACION_TECNICA.md  # Detalles de implementación
+│   └── GUION_DEMO_VIDEO.md       # Guión para demo
+├── docker-compose.yml
+└── Dockerfile
 ```
 
-## Flujo de Evaluación
+---
 
-```
-1. Fase 1: Análisis (LangGraph opcional)
- ├── Nodo 1: Extraer requisitos (Structured Output)
- ├── Nodo 2: Generar embeddings del CV (FAISS)
- ├── Nodo 3: Matching semántico + LLM verification
- └── Nodo 4: Calcular puntuación + confianza
+## Documentación
 
-2. Fase 2: Entrevista (opcional)
- ├── Generar preguntas para requisitos faltantes
- ├── Recopilar respuestas del candidato
- └── Evaluar respuestas y re-calcular puntuación
-```
+- **[Documentación Técnica](docs/DOCUMENTACION_TECNICA.md)**: Decisiones de diseño, arquitectura, valor diferencial
+- **[Guión Demo](docs/GUION_DEMO_VIDEO.md)**: Estructura para vídeo demostrativo
+- **[Demo en Vídeo](https://youtube.com/...)**: *(enlace pendiente)*
 
-## Reglas de Puntuación
+---
 
-- **100%**: Todos los requisitos cumplidos
-- **0%**: Falta algún requisito obligatorio (candidato descartado)
-- **Proporcional**: Según requisitos cumplidos vs totales
+## Contacto
 
-## Chatbot RAG para Historial
+Disponible para discusión técnica, debugging o profundización sobre cualquier aspecto.
 
-El sistema incluye un chatbot inteligente que permite consultar tu historial de evaluaciones usando RAG (Retrieval Augmented Generation).
-
-### Ejemplos de Consultas
-
-| Consulta | Respuesta Esperada |
-|----------|-------------------|
-| *"¿Por qué me rechazaron la última vez?"* | Análisis detallado de requisitos no cumplidos |
-| *"¿Cuáles son mis puntos fuertes?"* | Requisitos que cumples consistentemente |
-| *"¿Qué requisitos me faltan más?"* | Análisis de brechas frecuentes |
-| *"Compara mis dos últimas evaluaciones"* | Evolución entre evaluaciones |
-
-### Uso Programático del RAG
-
-```python
-from src.evaluator.rag import HistoryChatbot, HistoryVectorStore
-from src.evaluator.storage import UserMemory
-from src.evaluator.llm import LLMFactory
-
-# Crear LLM
-llm = LLMFactory.create(provider="openai", model_name="gpt-4o-mini")
-
-# Crear chatbot
-chatbot = HistoryChatbot(user_id="mi_usuario", llm=llm)
-
-# Consultar historial
-respuesta = chatbot.query("¿Por qué me rechazaron?")
-print(respuesta)
-
-# Ver documentos consultados
-for doc in chatbot.last_retrieved_docs:
- print(doc.metadata)
-```
-
-## Niveles de Confianza
-
-| Nivel | Significado | Visualización |
-|-------|-------------|---------------|
-| HIGH | Evidencia explícita en CV | Verde |
-| MEDIUM | Evidencia inferida | Amarillo |
-| LOW | Sin evidencia clara | Rojo |
-
-## Dependencias Principales
-
-- `langchain` / `langchain-openai` / `langchain-core`
-- `langgraph` - Orquestación multi-agente
-- `langsmith` - Trazabilidad y feedback
-- `faiss-cpu` - Embeddings semánticos
-- `streamlit` - Interfaz web
-- `pydantic` - Validación de datos
-- `playwright` - Scraping avanzado con navegador headless (anti-bot)
-
-## Licencia
-
-MIT
+**Carlos Vega**

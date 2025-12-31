@@ -1,0 +1,101 @@
+# =============================================================================
+# Velora - Docker Ignore
+# Archivos y directorios excluidos del contexto de build
+# =============================================================================
+
+# Entornos virtuales de Python
+venv/
+.venv/
+env/
+.env/
+ENV/
+
+# Cache de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Archivos de configuracion local (secretos)
+.env
+.env.local
+.env.*.local
+
+# IDE y editores
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentacion (excluir docs grandes)
+docs/
+*.md
+!README.md
+
+# Tests
+tests/
+test_*.py
+*_test.py
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Datos locales de desarrollo
+data/memoria_usuario/
+data/vectores/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Docker files (no necesarios en el contexto)
+docker-compose*.yml
+!docker-compose.yml
+
+# Archivos temporales
+*.tmp
+*.temp
+*.bak
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# MyPy
+.mypy_cache/
+
+# Ruff/Linters
+.ruff_cache/
+

@@ -38,10 +38,10 @@ dist/
 build/
 *.egg-info/
 
-# User data
-data/user_memory/
+# Datos de usuario
+data/memoria_usuario/
 data/checkpoints/
-data/vectors/
+data/vectores/
 
 # Cursor/IDE specific
 .cursor/
