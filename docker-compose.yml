@@ -3,7 +3,7 @@
 # =============================================================================
 # Uso:
 #   Desarrollo:  docker compose up --build
-#   Produccion:  docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#   Acceso:      http://localhost:8501
 #   Detener:     docker compose down
 #   Logs:        docker compose logs -f velora
 # =============================================================================

@@ -64,6 +64,9 @@ RUN groupadd --gid 1000 velora \
 # Copiar codigo fuente de la aplicacion
 COPY --chown=velora:velora . .
 
+# Dar permisos de ejecución al script de entrada
+RUN chmod +x /app/entrypoint.sh
+
 # Crear directorios para datos persistentes
 RUN mkdir -p /app/data/memoria_usuario /app/data/vectores \
     && chown -R velora:velora /app/data
@@ -83,10 +86,12 @@ maxUploadSize = 10
 gatherUsageStats = false
 
 [theme]
-primaryColor = "#1E40AF"
-backgroundColor = "#0F172A"
-secondaryBackgroundColor = "#1E293B"
-textColor = "#F8FAFC"
+base = "light"
+primaryColor = "#00B4D8"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F0F2F6"
+textColor = "#262730"
+font = "sans serif"
 EOF
 
 # Cambiar al usuario no-root
@@ -100,5 +105,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl --fail http://localhost:8501/_stcore/health || exit 1
 
 # Comando de inicio
-CMD ["streamlit", "run", "frontend/streamlit_app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+ENTRYPOINT ["/app/entrypoint.sh"]
 
