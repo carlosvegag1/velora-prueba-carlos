@@ -104,12 +104,12 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # Comando de inicio
 CMD echo "" && \
     echo "╔═══════════════════════════════════════════════════════════════╗" && \
-    echo "║          🚀 Velora - Sistema de Evaluación                   ║" && \
+    echo "║           Carlos Vega - Prueba Técnica                  ║" && \
     echo "╚═══════════════════════════════════════════════════════════════╝" && \
     echo "" && \
-    echo "✓ Aplicación iniciada correctamente" && \
+    echo " Aplicación iniciada correctamente" && \
     echo "" && \
-    echo "📍 Accede desde tu navegador:" && \
+    echo " Acceder desdes tu navegador:" && \
     echo "   → http://localhost:8501" && \
     echo "" && \
     echo "═══════════════════════════════════════════════════════════════" && \

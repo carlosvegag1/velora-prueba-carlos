@@ -949,15 +949,30 @@ def render_sidebar_logo():
 
 def analyze_user_history(memory: UserMemory, user_id: str, query: str) -> str:
     """Analiza el historial del usuario y responde a consultas."""
+    # #region agent log
+    import json, time
+    with open(r'c:\Users\carlo\Desktop\Velora\carlos_prueba_tecnica\.cursor\debug.log', 'a', encoding='utf-8') as f:
+        f.write(json.dumps({'location':'streamlit_app.py:950','message':'analyze_user_history ENTRY','data':{'query':query,'query_type':str(type(query)),'query_is_none':query is None},'timestamp':int(time.time()*1000),'sessionId':'debug-session','hypothesisId':'H1,H3,H5'}) + '\n')
+    # #endregion
+    
     evaluations = memory.get_evaluations(user_id)
     if not evaluations:
         return "No tienes evaluaciones en tu historial."
     
     # Validación: query puede ser None o vacío
     if not query or not isinstance(query, str):
+        # #region agent log
+        with open(r'c:\Users\carlo\Desktop\Velora\carlos_prueba_tecnica\.cursor\debug.log', 'a', encoding='utf-8') as f:
+            f.write(json.dumps({'location':'streamlit_app.py:957','message':'Query was None or invalid, setting to empty string','data':{'original_query':query},'timestamp':int(time.time()*1000),'sessionId':'debug-session','hypothesisId':'H5'}) + '\n')
+        # #endregion
         query = ""
     
     query_lower = query.lower()
+    
+    # #region agent log
+    with open(r'c:\Users\carlo\Desktop\Velora\carlos_prueba_tecnica\.cursor\debug.log', 'a', encoding='utf-8') as f:
+        f.write(json.dumps({'location':'streamlit_app.py:960','message':'After lower() call','data':{'query_lower':query_lower},'timestamp':int(time.time()*1000),'sessionId':'debug-session','hypothesisId':'H5'}) + '\n')
+    # #endregion
     
     if "última" in query_lower or "último" in query_lower or "reciente" in query_lower:
         latest = memory.get_latest_evaluation(user_id)
@@ -2275,19 +2290,51 @@ def main():
                 )
                 
                 if query:
+                    # #region agent log
+                    import json, time
+                    with open(r'c:\Users\carlo\Desktop\Velora\carlos_prueba_tecnica\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                        f.write(json.dumps({'location':'streamlit_app.py:2292','message':'RAG query received','data':{'query':query,'query_type':str(type(query)),'query_length':len(query) if query else 0},'timestamp':int(time.time()*1000),'sessionId':'debug-session','hypothesisId':'H3'}) + '\n')
+                    # #endregion
+                    
                     with st.spinner("Buscando en tu historial..."):
                         response = ""
                         try:
+                            # #region agent log
+                            with open(r'c:\Users\carlo\Desktop\Velora\carlos_prueba_tecnica\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                                f.write(json.dumps({'location':'streamlit_app.py:2296','message':'Before LLM creation','data':{'provider':st.session_state.get('provider', 'openai'),'model':st.session_state.get('model_name', 'gpt-4o-mini')},'timestamp':int(time.time()*1000),'sessionId':'debug-session','hypothesisId':'H2'}) + '\n')
+                            # #endregion
+                            
                             llm = LLMFactory.create_llm(
                                 provider=st.session_state.get('provider', 'openai'),
                                 model_name=st.session_state.get('model_name', 'gpt-4o-mini'),
                                 api_key=api_key
                             )
                             
+                            # #region agent log
+                            with open(r'c:\Users\carlo\Desktop\Velora\carlos_prueba_tecnica\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                                f.write(json.dumps({'location':'streamlit_app.py:2303','message':'Before HistoryChatbot creation','data':{'user_id':user_id},'timestamp':int(time.time()*1000),'sessionId':'debug-session','hypothesisId':'H2,H4'}) + '\n')
+                            # #endregion
+                            
                             chatbot = HistoryChatbot(user_id, llm, memory)
+                            
+                            # #region agent log
+                            with open(r'c:\Users\carlo\Desktop\Velora\carlos_prueba_tecnica\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                                f.write(json.dumps({'location':'streamlit_app.py:2304','message':'Before chatbot.query()','data':{'query':query},'timestamp':int(time.time()*1000),'sessionId':'debug-session','hypothesisId':'H2,H4'}) + '\n')
+                            # #endregion
+                            
                             response = chatbot.query(query)
                             
+                            # #region agent log
+                            with open(r'c:\Users\carlo\Desktop\Velora\carlos_prueba_tecnica\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                                f.write(json.dumps({'location':'streamlit_app.py:2305','message':'After chatbot.query() SUCCESS','data':{'response_length':len(response) if response else 0},'timestamp':int(time.time()*1000),'sessionId':'debug-session','hypothesisId':'H2'}) + '\n')
+                            # #endregion
+                            
                         except Exception as e:
+                            # #region agent log
+                            with open(r'c:\Users\carlo\Desktop\Velora\carlos_prueba_tecnica\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                                f.write(json.dumps({'location':'streamlit_app.py:2307','message':'LLM Exception caught - calling fallback','data':{'error':str(e),'error_type':str(type(e)),'query':query},'timestamp':int(time.time()*1000),'sessionId':'debug-session','hypothesisId':'H2,H5'}) + '\n')
+                            # #endregion
+                            
                             st.warning(f"Modo básico (Error LLM: {str(e)})")
                             response = analyze_user_history(memory, user_id, query)
                         
