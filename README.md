@@ -17,7 +17,7 @@ git clone <repo_url>
 cd carlos_prueba_tecnica
 
 # 2. Configurar API key
-cp .env.example .env
+cp .env.example .env  # Windows: copy .env.example .env
 # Editar .env y añadir: OPENAI_API_KEY=sk-...
 
 # 3. ¡Ejecutar!

@@ -60,14 +60,19 @@ cd carlos_prueba_tecnica
 cp .env.example .env
 ```
 
-**Windows (PowerShell)**:
-```powershell
-Copy-Item .env.example .env
+**Linux/Mac**:
+```bash
+cp .env.example .env
 ```
 
 **Windows (CMD)**:
 ```cmd
 copy .env.example .env
+```
+
+**Windows (PowerShell)**:
+```powershell
+Copy-Item .env.example .env
 ```
 
 ### 2.2 Editar con tu API Key
@@ -80,6 +85,11 @@ nano .env
 **Windows**:
 ```cmd
 notepad .env
+```
+
+O si prefieres VS Code:
+```bash
+code .env
 ```
 
 ### 2.3 Añadir tu API Key
