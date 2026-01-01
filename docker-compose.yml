@@ -41,6 +41,8 @@ services:
     volumes:
       # Datos de usuarios (evaluaciones, historial)
       - velora-data:/app/data
+      # Logs de debug (para desarrollo)
+      - ./.cursor:/app/.cursor
       # Volumenes locales para desarrollo (comentar en produccion)
       # - ./data:/app/data
     

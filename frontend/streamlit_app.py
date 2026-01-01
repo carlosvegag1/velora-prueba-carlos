@@ -950,8 +950,10 @@ def render_sidebar_logo():
 def analyze_user_history(memory: UserMemory, user_id: str, query: str) -> str:
     """Analiza el historial del usuario y responde a consultas."""
     # #region agent log
-    import json, time
-    with open(r'c:\Users\carlo\Desktop\Velora\carlos_prueba_tecnica\.cursor\debug.log', 'a', encoding='utf-8') as f:
+    import json, time, os
+    log_path = '/app/.cursor/debug.log' if os.path.exists('/app') else '.cursor/debug.log'
+    os.makedirs(os.path.dirname(log_path), exist_ok=True)
+    with open(log_path, 'a', encoding='utf-8') as f:
         f.write(json.dumps({'location':'streamlit_app.py:950','message':'analyze_user_history ENTRY','data':{'query':query,'query_type':str(type(query)),'query_is_none':query is None},'timestamp':int(time.time()*1000),'sessionId':'debug-session','hypothesisId':'H1,H3,H5'}) + '\n')
     # #endregion
     
@@ -962,7 +964,9 @@ def analyze_user_history(memory: UserMemory, user_id: str, query: str) -> str:
     # Validación: query puede ser None o vacío
     if not query or not isinstance(query, str):
         # #region agent log
-        with open(r'c:\Users\carlo\Desktop\Velora\carlos_prueba_tecnica\.cursor\debug.log', 'a', encoding='utf-8') as f:
+        log_path = '/app/.cursor/debug.log' if os.path.exists('/app') else '.cursor/debug.log'
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        with open(log_path, 'a', encoding='utf-8') as f:
             f.write(json.dumps({'location':'streamlit_app.py:957','message':'Query was None or invalid, setting to empty string','data':{'original_query':query},'timestamp':int(time.time()*1000),'sessionId':'debug-session','hypothesisId':'H5'}) + '\n')
         # #endregion
         query = ""
@@ -970,7 +974,9 @@ def analyze_user_history(memory: UserMemory, user_id: str, query: str) -> str:
     query_lower = query.lower()
     
     # #region agent log
-    with open(r'c:\Users\carlo\Desktop\Velora\carlos_prueba_tecnica\.cursor\debug.log', 'a', encoding='utf-8') as f:
+    log_path = '/app/.cursor/debug.log' if os.path.exists('/app') else '.cursor/debug.log'
+    os.makedirs(os.path.dirname(log_path), exist_ok=True)
+    with open(log_path, 'a', encoding='utf-8') as f:
         f.write(json.dumps({'location':'streamlit_app.py:960','message':'After lower() call','data':{'query_lower':query_lower},'timestamp':int(time.time()*1000),'sessionId':'debug-session','hypothesisId':'H5'}) + '\n')
     # #endregion
     
@@ -2291,8 +2297,10 @@ def main():
                 
                 if query:
                     # #region agent log
-                    import json, time
-                    with open(r'c:\Users\carlo\Desktop\Velora\carlos_prueba_tecnica\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                    import json, time, os
+                    log_path = '/app/.cursor/debug.log' if os.path.exists('/app') else '.cursor/debug.log'
+                    os.makedirs(os.path.dirname(log_path), exist_ok=True)
+                    with open(log_path, 'a', encoding='utf-8') as f:
                         f.write(json.dumps({'location':'streamlit_app.py:2292','message':'RAG query received','data':{'query':query,'query_type':str(type(query)),'query_length':len(query) if query else 0},'timestamp':int(time.time()*1000),'sessionId':'debug-session','hypothesisId':'H3'}) + '\n')
                     # #endregion
                     
@@ -2300,7 +2308,9 @@ def main():
                         response = ""
                         try:
                             # #region agent log
-                            with open(r'c:\Users\carlo\Desktop\Velora\carlos_prueba_tecnica\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                            log_path = '/app/.cursor/debug.log' if os.path.exists('/app') else '.cursor/debug.log'
+                            os.makedirs(os.path.dirname(log_path), exist_ok=True)
+                            with open(log_path, 'a', encoding='utf-8') as f:
                                 f.write(json.dumps({'location':'streamlit_app.py:2296','message':'Before LLM creation','data':{'provider':st.session_state.get('provider', 'openai'),'model':st.session_state.get('model_name', 'gpt-4o-mini')},'timestamp':int(time.time()*1000),'sessionId':'debug-session','hypothesisId':'H2'}) + '\n')
                             # #endregion
                             
@@ -2311,27 +2321,35 @@ def main():
                             )
                             
                             # #region agent log
-                            with open(r'c:\Users\carlo\Desktop\Velora\carlos_prueba_tecnica\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                            log_path = '/app/.cursor/debug.log' if os.path.exists('/app') else '.cursor/debug.log'
+                            os.makedirs(os.path.dirname(log_path), exist_ok=True)
+                            with open(log_path, 'a', encoding='utf-8') as f:
                                 f.write(json.dumps({'location':'streamlit_app.py:2303','message':'Before HistoryChatbot creation','data':{'user_id':user_id},'timestamp':int(time.time()*1000),'sessionId':'debug-session','hypothesisId':'H2,H4'}) + '\n')
                             # #endregion
                             
                             chatbot = HistoryChatbot(user_id, llm, memory)
                             
                             # #region agent log
-                            with open(r'c:\Users\carlo\Desktop\Velora\carlos_prueba_tecnica\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                            log_path = '/app/.cursor/debug.log' if os.path.exists('/app') else '.cursor/debug.log'
+                            os.makedirs(os.path.dirname(log_path), exist_ok=True)
+                            with open(log_path, 'a', encoding='utf-8') as f:
                                 f.write(json.dumps({'location':'streamlit_app.py:2304','message':'Before chatbot.query()','data':{'query':query},'timestamp':int(time.time()*1000),'sessionId':'debug-session','hypothesisId':'H2,H4'}) + '\n')
                             # #endregion
                             
                             response = chatbot.query(query)
                             
                             # #region agent log
-                            with open(r'c:\Users\carlo\Desktop\Velora\carlos_prueba_tecnica\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                            log_path = '/app/.cursor/debug.log' if os.path.exists('/app') else '.cursor/debug.log'
+                            os.makedirs(os.path.dirname(log_path), exist_ok=True)
+                            with open(log_path, 'a', encoding='utf-8') as f:
                                 f.write(json.dumps({'location':'streamlit_app.py:2305','message':'After chatbot.query() SUCCESS','data':{'response_length':len(response) if response else 0},'timestamp':int(time.time()*1000),'sessionId':'debug-session','hypothesisId':'H2'}) + '\n')
                             # #endregion
                             
                         except Exception as e:
                             # #region agent log
-                            with open(r'c:\Users\carlo\Desktop\Velora\carlos_prueba_tecnica\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                            log_path = '/app/.cursor/debug.log' if os.path.exists('/app') else '.cursor/debug.log'
+                            os.makedirs(os.path.dirname(log_path), exist_ok=True)
+                            with open(log_path, 'a', encoding='utf-8') as f:
                                 f.write(json.dumps({'location':'streamlit_app.py:2307','message':'LLM Exception caught - calling fallback','data':{'error':str(e),'error_type':str(type(e)),'query':query},'timestamp':int(time.time()*1000),'sessionId':'debug-session','hypothesisId':'H2,H5'}) + '\n')
                             # #endregion
                             
