@@ -64,9 +64,6 @@ RUN groupadd --gid 1000 velora \
 # Copiar codigo fuente de la aplicacion
 COPY --chown=velora:velora . .
 
-# Dar permisos de ejecución al script de entrada
-RUN chmod +x /app/entrypoint.sh
-
 # Crear directorios para datos persistentes
 RUN mkdir -p /app/data/memoria_usuario /app/data/vectores \
     && chown -R velora:velora /app/data
@@ -105,5 +102,17 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl --fail http://localhost:8501/_stcore/health || exit 1
 
 # Comando de inicio
-ENTRYPOINT ["/app/entrypoint.sh"]
+CMD echo "" && \
+    echo "╔═══════════════════════════════════════════════════════════════╗" && \
+    echo "║          🚀 Velora - Sistema de Evaluación                   ║" && \
+    echo "╚═══════════════════════════════════════════════════════════════╝" && \
+    echo "" && \
+    echo "✓ Aplicación iniciada correctamente" && \
+    echo "" && \
+    echo "📍 Accede desde tu navegador:" && \
+    echo "   → http://localhost:8501" && \
+    echo "" && \
+    echo "═══════════════════════════════════════════════════════════════" && \
+    echo "" && \
+    streamlit run frontend/streamlit_app.py --server.port=8501 --server.address=0.0.0.0
 
