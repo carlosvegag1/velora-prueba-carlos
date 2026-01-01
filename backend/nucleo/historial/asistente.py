@@ -141,41 +141,10 @@ Texto completo: {doc.page_content[:500]}
     
     def consultar(self, pregunta: str, k: int = 5) -> str:
         """Procesa una pregunta del usuario sobre su historial."""
-        # #region agent log
-        import json, time, os
-        log_path = '/app/.cursor/debug.log' if os.path.exists('/app') else '.cursor/debug.log'
-        os.makedirs(os.path.dirname(log_path), exist_ok=True)
-        with open(log_path, 'a', encoding='utf-8') as f:
-            f.write(json.dumps({'location':'asistente.py:142','message':'consultar() ENTRY','data':{'pregunta':pregunta,'pregunta_type':str(type(pregunta)),'pregunta_is_none':pregunta is None,'k':k},'timestamp':int(time.time()*1000),'sessionId':'debug-session','hypothesisId':'H2,H4'}) + '\n')
-        # #endregion
+        documentos = self.almacen_vectorial.buscar(pregunta, k=k)
+        self.ultimos_documentos_recuperados = documentos
         
-        try:
-            # #region agent log
-            log_path = '/app/.cursor/debug.log' if os.path.exists('/app') else '.cursor/debug.log'
-            os.makedirs(os.path.dirname(log_path), exist_ok=True)
-            with open(log_path, 'a', encoding='utf-8') as f:
-                f.write(json.dumps({'location':'asistente.py:144','message':'Before almacen_vectorial.buscar()','data':{'pregunta':pregunta},'timestamp':int(time.time()*1000),'sessionId':'debug-session','hypothesisId':'H4'}) + '\n')
-            # #endregion
-            
-            documentos = self.almacen_vectorial.buscar(pregunta, k=k)
-            self.ultimos_documentos_recuperados = documentos
-            
-            # #region agent log
-            log_path = '/app/.cursor/debug.log' if os.path.exists('/app') else '.cursor/debug.log'
-            os.makedirs(os.path.dirname(log_path), exist_ok=True)
-            with open(log_path, 'a', encoding='utf-8') as f:
-                f.write(json.dumps({'location':'asistente.py:145','message':'After buscar() - before formatear','data':{'docs_count':len(documentos)},'timestamp':int(time.time()*1000),'sessionId':'debug-session','hypothesisId':'H4'}) + '\n')
-            # #endregion
-            
-            contexto = self._formatear_contexto(documentos)
-        except Exception as e:
-            # #region agent log
-            log_path = '/app/.cursor/debug.log' if os.path.exists('/app') else '.cursor/debug.log'
-            os.makedirs(os.path.dirname(log_path), exist_ok=True)
-            with open(log_path, 'a', encoding='utf-8') as f:
-                f.write(json.dumps({'location':'asistente.py:147','message':'Exception in buscar/formatear','data':{'error':str(e),'error_type':str(type(e))},'timestamp':int(time.time()*1000),'sessionId':'debug-session','hypothesisId':'H4'}) + '\n')
-            # #endregion
-            raise
+        contexto = self._formatear_contexto(documentos)
         
         prompt = ChatPromptTemplate.from_messages([
             ("system", PROMPT_ASISTENTE_HISTORIAL),
@@ -198,12 +167,6 @@ Texto completo: {doc.page_content[:500]}
             
         except Exception as e:
             logger.error(f"Error al generar respuesta: {e}")
-            # #region agent log
-            log_path = '/app/.cursor/debug.log' if os.path.exists('/app') else '.cursor/debug.log'
-            os.makedirs(os.path.dirname(log_path), exist_ok=True)
-            with open(log_path, 'a', encoding='utf-8') as f:
-                f.write(json.dumps({'location':'asistente.py:169','message':'Exception in chain.invoke()','data':{'error':str(e),'error_type':str(type(e))},'timestamp':int(time.time()*1000),'sessionId':'debug-session','hypothesisId':'H2'}) + '\n')
-            # #endregion
             return f"Error al procesar la consulta: {str(e)}"
     
     query = consultar

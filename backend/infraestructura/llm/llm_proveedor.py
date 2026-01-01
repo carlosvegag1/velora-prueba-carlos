@@ -99,6 +99,8 @@ class FabricaLLM:
     
     @staticmethod
     def obtener_proveedor_desde_modelo(nombre_modelo: str) -> str:
+        if not nombre_modelo:
+            return "openai"
         modelo_lower = nombre_modelo.lower()
         if modelo_lower.startswith("gpt") or "openai" in modelo_lower:
             return "openai"
@@ -120,6 +122,8 @@ class FabricaLLM:
         api_key: Optional[str] = None
     ) -> BaseChatModel:
         """Crea instancia de LLM del proveedor especificado."""
+        if not proveedor:
+            proveedor = "openai"
         proveedor_lower = proveedor.lower()
         
         if proveedor_lower == "openai":

@@ -46,6 +46,8 @@ class FabricaEmbeddings:
     
     @staticmethod
     def obtener_modelo_embedding(proveedor: str) -> Optional[str]:
+        if not proveedor:
+            return None
         return MAPA_PROVEEDOR_EMBEDDING.get(proveedor.lower())
     
     @staticmethod
@@ -54,6 +56,8 @@ class FabricaEmbeddings:
     
     @staticmethod
     def soporta_embeddings(proveedor: str) -> bool:
+        if not proveedor:
+            return False
         proveedor_lower = proveedor.lower()
         if proveedor_lower in PROVEEDORES_SIN_EMBEDDINGS:
             return False
@@ -92,6 +96,8 @@ class FabricaEmbeddings:
         Returns:
             Instancia de Embeddings configurada
         """
+        if not proveedor:
+            proveedor = "openai"
         proveedor_lower = proveedor.lower()
         
         if not FabricaEmbeddings.soporta_embeddings(proveedor_lower):
@@ -129,6 +135,8 @@ class FabricaEmbeddings:
     
     @staticmethod
     def validar_api_key(proveedor: str, api_key: Optional[str] = None) -> bool:
+        if not proveedor:
+            return False
         proveedor_lower = proveedor.lower()
         if proveedor_lower in PROVEEDORES_SIN_EMBEDDINGS:
             return False
@@ -158,6 +166,8 @@ class FabricaEmbeddings:
     @staticmethod
     def obtener_dimensiones_optimizadas(proveedor: str) -> Optional[int]:
         """Retorna las dimensiones optimizadas para el proveedor dado."""
+        if not proveedor:
+            return None
         return DIMENSIONES_OPTIMIZADAS.get(proveedor.lower())
     
     @staticmethod
