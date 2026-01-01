@@ -953,6 +953,10 @@ def analyze_user_history(memory: UserMemory, user_id: str, query: str) -> str:
     if not evaluations:
         return "No tienes evaluaciones en tu historial."
     
+    # Validación: query puede ser None o vacío
+    if not query or not isinstance(query, str):
+        query = ""
+    
     query_lower = query.lower()
     
     if "última" in query_lower or "último" in query_lower or "reciente" in query_lower:

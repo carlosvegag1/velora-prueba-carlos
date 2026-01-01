@@ -5,12 +5,13 @@ FROM python:3.11-slim-bookworm AS base
 LABEL description="Sistema de evaluacion de candidatos con LangChain, LangGraph y RAG"
 LABEL version="2.1.0"
 
-# Variables de entorno para Python
+# Variables de entorno para Python y Playwright
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONFAULTHANDLER=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 # Directorio de trabajo
 WORKDIR /app
@@ -50,8 +51,9 @@ COPY requirements.txt .
 # Instalar dependencias de Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Instalar navegador Chromium para Playwright
-RUN playwright install chromium --with-deps
+# Instalar navegador Chromium para Playwright en directorio global
+RUN playwright install chromium --with-deps \
+    && chmod -R 755 /ms-playwright
 
 FROM dependencies AS production
 
