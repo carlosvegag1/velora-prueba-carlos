@@ -46,6 +46,8 @@ data/vectores/
 
 # Temporales
 *.tmp
-*_temp*
+*_temp.py
+*_temp.txt
+*_temp.json
 debug.log
 test_debug*.json
