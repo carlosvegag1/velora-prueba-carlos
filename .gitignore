@@ -39,13 +39,10 @@ dist/
 build/
 *.egg-info/
 
-# Datos de usuario (generados en runtime)
+# Datos de usuario
 data/memoria_usuario/
 data/checkpoints/
 data/vectores/
-
-# Cursor/IDE specific
-.cursor/
 
 # Temporales
 *.tmp
