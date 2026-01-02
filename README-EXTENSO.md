@@ -68,7 +68,7 @@ flowchart TB
 
 ### Gestion de Credenciales
 
-Las **API keys de los proveedores LLM se configuran exclusivamente desde la interfaz web**. El backend no requiere archivos `.env` ni configuracion previa de credenciales. Esta decision arquitectonica:
+Las **API keys de los proveedores LLM se configuran exclusivamente desde la interfaz web**. El backend requiere archivo `.env`, pero no necesariamente configuracion previa de credenciales. Esta decision arquitectonica:
 
 - Simplifica el despliegue y la experiencia de usuario
 - Permite cambiar de proveedor en tiempo de ejecucion sin reiniciar
@@ -177,10 +177,6 @@ Todas las interacciones con el LLM utilizan modelos Pydantic como schema de resp
 - Validacion automatica de tipos en tiempo de ejecucion
 - Eliminacion de parsing manual de strings
 - Documentacion implicita del contrato de datos
-
-### Nomenclatura Bilingue
-
-El codigo utiliza nomenclatura en castellano con aliases en ingles para metodos publicos. Esto facilita legibilidad en el contexto de la prueba mientras mantiene compatibilidad con convenciones internacionales.
 
 ---
 
