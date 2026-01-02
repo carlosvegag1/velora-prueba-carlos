@@ -25,7 +25,7 @@ docker compose up --build
 
 Acceder a **[http://localhost:8501](http://localhost:8501)**
 
-**Nota sobre .env**: Las credenciales de los proveedores LLM (OpenAI, Google, Anthropic) se pueden configurar directamente desde la **interfaz web**. No es necesario estrictamente necesario configurar el .env para este fin, pero si para subir los registros a LangSmith
+**Nota sobre .env**: Las credenciales de los proveedores LLM (OpenAI, Google, Anthropic) se pueden configurar directamente desde la **interfaz web**. No es estrictamente necesario configurar el .env para este fin, pero si para subir los registros a LangSmith
 
 Primera ejecucion tarda 3-5 minutos (instalacion de dependencias y Chromium para scraping).
 
