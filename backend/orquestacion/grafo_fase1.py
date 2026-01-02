@@ -1,7 +1,8 @@
 """
-Grafo LangGraph para orquestación multi-agente de la Fase 1.
+Grafo LangGraph para orquestacion multi-agente de la Fase 1.
 
-Flujo: extraer_requisitos → embeber_cv → matching_semantico → calcular_puntuacion
+Incluye normalizacion atomica y contexto temporal para reproducibilidad.
+Flujo: extraer_requisitos -> embeber_cv -> matching_semantico -> calcular_puntuacion
 """
 
 import re
@@ -21,12 +22,12 @@ from ..utilidades import (
     calcular_puntuacion, procesar_coincidencias,
     agregar_requisitos_no_procesados, obtener_registro_operacional
 )
+from ..utilidades.normalizacion import normalizar_requisitos
+from ..utilidades.contexto_temporal import obtener_contexto_prompt
 from ..infraestructura.llm import ComparadorSemantico
 
 
-# Definición del estado compartido entre nodos
 class EstadoFase1(TypedDict):
-    """Estado que fluye y se enriquece a través de los nodos del grafo."""
     oferta_trabajo: str
     cv: str
     requisitos: List[dict]
@@ -45,10 +46,8 @@ class EstadoFase1(TypedDict):
 Phase1State = EstadoFase1
 
 
-# Nodos del grafo (agentes especializados)
-
 def crear_nodo_extraccion(llm: BaseChatModel):
-    """Nodo que extrae requisitos de la oferta de trabajo."""
+    """Nodo que extrae requisitos con granularidad atomica."""
     llm_extraccion = llm.with_structured_output(RespuestaExtraccionRequisitos)
     
     def extraer_requisitos(estado: EstadoFase1) -> dict:
@@ -67,17 +66,19 @@ def crear_nodo_extraccion(llm: BaseChatModel):
         try:
             resultado: RespuestaExtraccionRequisitos = chain.invoke({"job_offer": oferta})
             
-            requisitos = []
+            requisitos_raw = []
             vistos = set()
             
             for req in resultado.requirements:
                 normalizado = req.description.lower().strip()
                 if normalizado not in vistos:
                     vistos.add(normalizado)
-                    requisitos.append({
+                    requisitos_raw.append({
                         "description": req.description.strip(),
                         "type": req.type
                     })
+            
+            requisitos = normalizar_requisitos(requisitos_raw)
             
             if not requisitos:
                 return {
@@ -88,11 +89,11 @@ def crear_nodo_extraccion(llm: BaseChatModel):
             
             return {
                 "requisitos": requisitos,
-                "mensajes": [f"[OK] Extraídos {len(requisitos)} requisitos"]
+                "mensajes": [f"[OK] Extraidos {len(requisitos)} requisitos (normalizados)"]
             }
         except Exception as e:
             return {
-                "error": f"Error en extracción: {str(e)}",
+                "error": f"Error en extraccion: {str(e)}",
                 "requisitos": [],
                 "mensajes": [f"[ERROR] {str(e)}"]
             }
@@ -104,7 +105,6 @@ create_extract_node = crear_nodo_extraccion
 
 
 def crear_nodo_embedding(comparador_semantico: Optional[ComparadorSemantico]):
-    """Nodo que genera embeddings del CV y busca evidencia semántica."""
     
     def embeber_cv(estado: EstadoFase1) -> dict:
         registro = obtener_registro_operacional()
@@ -142,7 +142,7 @@ def crear_nodo_embedding(comparador_semantico: Optional[ComparadorSemantico]):
             
             return {
                 "evidencia_semantica": mapa_evidencia,
-                "mensajes": [f"[OK] Evidencia semántica para {len(mapa_evidencia)} requisitos"]
+                "mensajes": [f"[OK] Evidencia semantica para {len(mapa_evidencia)} requisitos"]
             }
         except Exception as e:
             return {
@@ -157,7 +157,7 @@ create_embed_node = crear_nodo_embedding
 
 
 def crear_nodo_matching(llm: BaseChatModel):
-    """Nodo que evalúa el cumplimiento de requisitos contra el CV."""
+    """Nodo que evalua requisitos con contexto temporal."""
     llm_matching = llm.with_structured_output(RespuestaMatchingCV)
     
     def matching_cv(estado: EstadoFase1) -> dict:
@@ -184,15 +184,16 @@ def crear_nodo_matching(llm: BaseChatModel):
             
             ev_sem = evidencia_semantica.get(req['description'].lower())
             if ev_sem and ev_sem.get('semantic_score', 0) > 0.4:
-                linea += f"\n  [PISTA SEMÁNTICA - Score: {ev_sem['semantic_score']:.2f}]: \"{ev_sem['text'][:150]}...\""
+                linea += f"\n  [PISTA SEMANTICA - Score: {ev_sem['semantic_score']:.2f}]: \"{ev_sem['text'][:150]}...\""
             
             lineas.append(linea)
         
         texto_requisitos = "\n".join(lineas)
+        contexto_temporal = obtener_contexto_prompt()
         
         prompt = ChatPromptTemplate.from_messages([
             ("system", PROMPT_MATCHING_CV),
-            ("human", "CV del candidato:\n{cv}\n\nRequisitos a evaluar:\n{requirements_list}")
+            ("human", f"CONTEXTO TEMPORAL: {contexto_temporal}\n\nCV del candidato:\n{{cv}}\n\nRequisitos a evaluar:\n{{requirements_list}}")
         ])
         
         chain = prompt | llm_matching
@@ -246,7 +247,6 @@ create_match_node = crear_nodo_matching
 
 
 def crear_nodo_puntuacion():
-    """Nodo que calcula la puntuación final y genera el resultado."""
     
     def calcular_puntuacion_final(estado: EstadoFase1) -> dict:
         registro = obtener_registro_operacional()
@@ -259,7 +259,7 @@ def crear_nodo_puntuacion():
                 "requisitos_cumplidos": [],
                 "requisitos_no_cumplidos": [],
                 "requisitos_faltantes": [],
-                "mensajes": ["[ERROR] Evaluación fallida por error previo"]
+                "mensajes": ["[ERROR] Evaluacion fallida por error previo"]
             }
         
         requisitos = estado["requisitos"]
@@ -299,13 +299,10 @@ def crear_nodo_puntuacion():
 create_score_node = crear_nodo_puntuacion
 
 
-# Construcción y ejecución del grafo
-
 def crear_grafo_fase1(
     llm: BaseChatModel,
     comparador_semantico: Optional[ComparadorSemantico] = None
 ) -> StateGraph:
-    """Crea el grafo LangGraph para la Fase 1."""
     nodo_extraccion = crear_nodo_extraccion(llm)
     nodo_embedding = crear_nodo_embedding(comparador_semantico)
     nodo_matching = crear_nodo_matching(llm)
@@ -331,7 +328,6 @@ create_phase1_graph = crear_grafo_fase1
 
 
 def ejecutar_grafo_fase1(grafo, oferta_trabajo: str, cv: str) -> ResultadoFase1:
-    """Ejecuta el grafo de Fase 1 y retorna el resultado."""
     estado_inicial: EstadoFase1 = {
         "oferta_trabajo": oferta_trabajo,
         "cv": cv,
@@ -367,7 +363,6 @@ run_phase1_graph = ejecutar_grafo_fase1
 
 
 async def ejecutar_grafo_fase1_streaming(grafo, oferta_trabajo: str, cv: str):
-    """Ejecuta el grafo con streaming de estados intermedios."""
     estado_inicial: EstadoFase1 = {
         "oferta_trabajo": oferta_trabajo,
         "cv": cv,

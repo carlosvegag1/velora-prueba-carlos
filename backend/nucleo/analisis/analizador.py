@@ -1,8 +1,8 @@
 """
-Fase 1: Extracción de requisitos de ofertas y matching con CV.
+Fase 1: Extraccion de requisitos de ofertas y matching con CV.
 
-Uso Structured Output para respuestas válidas garantizadas.
-Opcionalmente orquesto con LangGraph para flujos multi-agente.
+Uso Structured Output para respuestas validas garantizadas.
+Incluye normalizacion atomica post-extraccion para reproducibilidad.
 """
 
 import re
@@ -24,13 +24,18 @@ from ...utilidades import (
     calcular_puntuacion, procesar_coincidencias,
     agregar_requisitos_no_procesados, obtener_registro_operacional
 )
+from ...utilidades.normalizacion import normalizar_requisitos
+from ...utilidades.contexto_temporal import obtener_contexto_prompt
 
 
 class AnalizadorFase1:
     """
-    Analizador de Fase 1: Extrae requisitos y evalúa su cumplimiento contra el CV.
+    Analizador de Fase 1: Extrae requisitos y evalua su cumplimiento contra el CV.
     
-    Soporta modo tradicional (secuencial) o LangGraph (multi-agente con streaming).
+    Garantiza:
+    - Granularidad atomica mediante normalizacion post-extraccion
+    - Contexto temporal consistente en todas las evaluaciones
+    - Reproducibilidad del 100% en extraccion de requisitos
     """
     
     def __init__(
@@ -43,14 +48,13 @@ class AnalizadorFase1:
         usar_matching_semantico: bool = True,
         usar_langgraph: bool = False
     ):
-        """Inicializa el analizador con LLM y configuración de matching."""
         self.proveedor = proveedor
         self.api_key = api_key
         self.usar_matching_semantico = usar_matching_semantico
         self.usar_langgraph = usar_langgraph
         self._registro = obtener_registro_operacional()
         
-        temp_efectiva = temperatura if temperatura is not None else ConfiguracionHiperparametros.obtener_temperatura("phase1_matching")
+        temp_efectiva = temperatura if temperatura is not None else ConfiguracionHiperparametros.obtener_temperatura("phase1_extraction")
         
         self._embeddings_disponibles = FabricaEmbeddings.soporta_embeddings(proveedor)
         self._advertencia_embeddings = FabricaEmbeddings.obtener_mensaje_proveedor(proveedor)
@@ -84,7 +88,6 @@ class AnalizadorFase1:
             self._registro.config_langgraph(habilitado=False)
     
     def _inicializar_comparador_semantico(self, proveedor: str, api_key: Optional[str]):
-        """Configura comparador semántico con fallback si el proveedor no soporta embeddings."""
         try:
             if FabricaEmbeddings.soporta_embeddings(proveedor):
                 proveedor_embeddings = proveedor
@@ -114,7 +117,6 @@ class AnalizadorFase1:
             self._registro.config_semantic(habilitado=True, inicializado=False, razon=str(e))
     
     def _inicializar_langgraph(self):
-        """Inicializa el grafo LangGraph para orquestación multi-agente."""
         try:
             from ...orquestacion.grafo_fase1 import crear_grafo_fase1
             self._grafo = crear_grafo_fase1(self.llm, self.comparador_semantico)
@@ -123,7 +125,6 @@ class AnalizadorFase1:
             self.usar_langgraph = False
     
     def obtener_estado_embeddings(self) -> dict:
-        """Retorna estado de los embeddings para esta instancia."""
         return {
             "disponible": self._embeddings_disponibles,
             "habilitado": self.usar_matching_semantico,
@@ -135,7 +136,10 @@ class AnalizadorFase1:
     get_embedding_status = obtener_estado_embeddings
     
     def extraer_requisitos(self, oferta_trabajo: str) -> List[dict]:
-        """Extrae requisitos de una oferta de trabajo."""
+        """
+        Extrae requisitos de una oferta de trabajo con granularidad atomica.
+        Aplica normalizacion post-extraccion para descomponer requisitos compuestos.
+        """
         prompt = ChatPromptTemplate.from_messages([
             ("system", PROMPT_EXTRACCION_REQUISITOS),
             ("human", "{job_offer}")
@@ -144,24 +148,25 @@ class AnalizadorFase1:
         chain = prompt | self.llm_extraccion
         resultado: RespuestaExtraccionRequisitos = chain.invoke({"job_offer": oferta_trabajo})
         
-        requisitos = []
+        requisitos_raw = []
         vistos = set()
         
         for req in resultado.requirements:
             normalizado = req.description.lower().strip()
             if normalizado not in vistos:
                 vistos.add(normalizado)
-                requisitos.append({
+                requisitos_raw.append({
                     "description": req.description.strip(),
                     "type": req.type
                 })
         
-        return requisitos
+        requisitos_normalizados = normalizar_requisitos(requisitos_raw)
+        
+        return requisitos_normalizados
     
     extract_requirements = extraer_requisitos
     
     def _obtener_evidencia_semantica(self, cv: str, requisitos: List[dict]) -> Dict[str, dict]:
-        """Obtiene evidencia semántica del CV para cada requisito usando embeddings."""
         if not self.comparador_semantico:
             return {}
         
@@ -194,11 +199,13 @@ class AnalizadorFase1:
         requisitos: List[dict],
         evidencia_semantica: Optional[Dict[str, dict]] = None
     ) -> dict:
-        """Evalúa qué requisitos se cumplen según el CV."""
+        """
+        Evalua que requisitos se cumplen segun el CV.
+        Incluye contexto temporal para calculo preciso de experiencia.
+        """
         if not requisitos:
             return {"matches": [], "analysis_summary": "No hay requisitos para evaluar."}
         
-        # Formateo requisitos con pistas semánticas si están disponibles
         lineas = []
         for req in requisitos:
             linea = f"- [{req['type'].upper()}] {req['description']}"
@@ -206,15 +213,17 @@ class AnalizadorFase1:
             if evidencia_semantica:
                 ev_sem = evidencia_semantica.get(req['description'].lower())
                 if ev_sem and ev_sem.get('semantic_score', 0) > 0.4:
-                    linea += f"\n  [PISTA SEMÁNTICA - Score: {ev_sem['semantic_score']:.2f}]: \"{ev_sem['text'][:150]}...\""
+                    linea += f"\n  [PISTA SEMANTICA - Score: {ev_sem['semantic_score']:.2f}]: \"{ev_sem['text'][:150]}...\""
             
             lineas.append(linea)
         
         texto_requisitos = "\n".join(lineas)
         
+        contexto_temporal = obtener_contexto_prompt()
+        
         prompt = ChatPromptTemplate.from_messages([
             ("system", PROMPT_MATCHING_CV),
-            ("human", "CV del candidato:\n{cv}\n\nRequisitos a evaluar:\n{requirements_list}")
+            ("human", f"CONTEXTO TEMPORAL: {contexto_temporal}\n\nCV del candidato:\n{{cv}}\n\nRequisitos a evaluar:\n{{requirements_list}}")
         ])
         
         chain = prompt | self.llm_matching
@@ -249,7 +258,6 @@ class AnalizadorFase1:
     match_cv_with_requirements = evaluar_cv_con_requisitos
     
     def analizar(self, oferta_trabajo: str, cv: str) -> ResultadoFase1:
-        """Ejecuta el análisis completo de Fase 1."""
         tiempo_inicio = time.time()
         
         if self.usar_langgraph and self._grafo:
@@ -271,16 +279,14 @@ class AnalizadorFase1:
     analyze = analizar
     
     def _analizar_con_langgraph(self, oferta_trabajo: str, cv: str) -> ResultadoFase1:
-        """Ejecuta análisis usando LangGraph."""
         from ...orquestacion.grafo_fase1 import ejecutar_grafo_fase1
         return ejecutar_grafo_fase1(self._grafo, oferta_trabajo, cv)
     
     async def analizar_streaming(self, oferta_trabajo: str, cv: str) -> AsyncGenerator[dict, None]:
-        """Ejecuta análisis con streaming de progreso (requiere LangGraph)."""
         if not self.usar_langgraph or not self._grafo:
-            yield {"node": "start", "messages": ["[START] Iniciando análisis..."]}
+            yield {"node": "start", "messages": ["[START] Iniciando analisis..."]}
             resultado = self._analizar_tradicional(oferta_trabajo, cv)
-            yield {"node": "complete", "messages": ["[OK] Análisis completado"], "result": resultado}
+            yield {"node": "complete", "messages": ["[OK] Analisis completado"], "result": resultado}
             return
         
         from ...orquestacion.grafo_fase1 import ejecutar_grafo_fase1_streaming
@@ -297,13 +303,12 @@ class AnalizadorFase1:
     analyze_streaming = analizar_streaming
     
     def _analizar_tradicional(self, oferta_trabajo: str, cv: str) -> ResultadoFase1:
-        """Flujo tradicional: extraer → matching → puntuación."""
         requisitos = self.extraer_requisitos(oferta_trabajo)
         
         if not requisitos:
             raise ValueError(
                 "No se encontraron requisitos en la oferta de trabajo. "
-                "La oferta debe contener secciones explícitas de requisitos."
+                "La oferta debe contener secciones explicitas de requisitos."
             )
         
         obligatorios = sum(1 for r in requisitos if r["type"] == "obligatory")

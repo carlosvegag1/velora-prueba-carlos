@@ -1,5 +1,5 @@
 """
-Utilidades transversales: logger y funciones de procesamiento.
+Utilidades transversales: logger, procesamiento, normalizacion y contexto temporal.
 """
 
 from .logger import (
@@ -17,10 +17,28 @@ from .procesamiento import (
     agregar_requisitos_no_procesados,
 )
 
+from .normalizacion import (
+    normalizar_requisitos,
+    descomponer_requisito,
+    validar_atomicidad,
+)
+
+from .contexto_temporal import (
+    ContextoTemporal,
+    obtener_contexto_temporal,
+    obtener_fecha_referencia,
+    obtener_contexto_prompt,
+    generar_instrucciones_experiencia,
+)
+
 __all__ = [
     "RegistroOperacional", "obtener_registro_operacional",
     "Colores", "Indicadores",
     "calcular_puntuacion", "cargar_archivo_texto",
     "limpiar_descripcion_requisito",
     "procesar_coincidencias", "agregar_requisitos_no_procesados",
+    "normalizar_requisitos", "descomponer_requisito", "validar_atomicidad",
+    "ContextoTemporal", "obtener_contexto_temporal",
+    "obtener_fecha_referencia", "obtener_contexto_prompt",
+    "generar_instrucciones_experiencia",
 ]
