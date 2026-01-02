@@ -1,6 +1,6 @@
 # Sistema de Evaluacion de Candidatos con IA
 
-Prueba tecnica para Ingeniero de IA Generativa | Carlos Vega | Enero 2025
+Prueba tecnica para Ingeniero de IA Generativa | Carlos Vega | Enero 2026
 
 ---
 
