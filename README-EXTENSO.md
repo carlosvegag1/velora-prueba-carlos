@@ -1,133 +1,278 @@
 # Documentacion Tecnica Extendida
 
-Sistema de Evaluacion de Candidatos con IA | Carlos Vega
+Sistema de Evaluacion de Candidatos con IA | Carlos Vega | Enero 2025
 
 ---
 
-## 1. Analisis de Requisitos
+## Videodemo
 
-La prueba tecnica especifica un sistema de dos fases para evaluar candidatos:
+Para visualizar el sistema operando a pleno rendimiento, consulta la **videodemo interactiva**:
+
+**[Ver Videodemo del Sistema](https://youtu.be/tu-video-id)**
+
+---
+
+## 1. Arquitectura del Sistema
+
+### Vision General
+
+```mermaid
+flowchart TB
+    subgraph Frontend["Frontend (Streamlit)"]
+        UI[Interfaz de Usuario]
+        CONFIG[Configuracion LLM]
+        UPLOAD[Carga CV/Oferta]
+    end
+
+    subgraph Backend["Backend"]
+        subgraph Nucleo["Nucleo"]
+            ANAL[Analizador Fase 1]
+            ENTREV[Entrevistador Fase 2]
+            HIST[Asistente Historial]
+        end
+
+        subgraph Orquestacion["Orquestacion"]
+            GRAPH[Grafo LangGraph]
+            COORD[Coordinador]
+        end
+
+        subgraph Infraestructura["Infraestructura"]
+            LLM[Fabrica LLM]
+            EMB[Fabrica Embeddings]
+            PERSIST[Persistencia JSON]
+        end
+    end
+
+    subgraph Externos["Servicios Externos"]
+        OPENAI[OpenAI API]
+        GOOGLE[Google Gemini API]
+        ANTHROPIC[Anthropic Claude API]
+    end
+
+    UI --> CONFIG
+    UI --> UPLOAD
+    CONFIG --> LLM
+    UPLOAD --> COORD
+    COORD --> GRAPH
+    GRAPH --> ANAL
+    GRAPH --> ENTREV
+    ANAL --> LLM
+    ENTREV --> LLM
+    HIST --> EMB
+    LLM --> OPENAI
+    LLM --> GOOGLE
+    LLM --> ANTHROPIC
+    ANAL --> PERSIST
+    ENTREV --> PERSIST
+```
+
+### Gestion de Credenciales
+
+Las **API keys de los proveedores LLM se configuran exclusivamente desde la interfaz web**. El backend no requiere archivos `.env` ni configuracion previa de credenciales. Esta decision arquitectonica:
+
+- Simplifica el despliegue y la experiencia de usuario
+- Permite cambiar de proveedor en tiempo de ejecucion sin reiniciar
+- Evita exposicion accidental de credenciales en repositorios
+
+---
+
+## 2. Pipeline de Procesamiento
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant F as Frontend
+    participant G as Grafo LangGraph
+    participant E as Nodo Extraccion
+    participant M as Nodo Matching
+    participant I as Nodo Entrevista
+    participant L as LLM Provider
+
+    U->>F: Sube CV + Oferta
+    F->>G: Inicia evaluacion
+    G->>E: Extraer requisitos
+    E->>L: Structured Output
+    L-->>E: Lista requisitos tipados
+    E-->>G: Estado actualizado
+    G->>M: Matching CV vs Requisitos
+    M->>L: Evaluar cumplimiento
+    L-->>M: Matches con confianza
+    M-->>G: Puntuacion + faltantes
+
+    alt Hay requisitos faltantes
+        G->>I: Iniciar entrevista
+        loop Por cada requisito faltante
+            I->>L: Generar pregunta
+            L-->>I: Pregunta contextual
+            I-->>F: Mostrar pregunta
+            U->>F: Respuesta
+            F->>I: Procesar respuesta
+            I->>L: Evaluar respuesta
+            L-->>I: Cumplimiento + razonamiento
+        end
+        I-->>G: Evaluacion final
+    end
+
+    G-->>F: Resultado completo
+    F-->>U: Visualizar resultado
+```
+
+---
+
+## 3. Analisis de Requisitos de la Prueba
 
 ### Fase 1: Analisis Automatico
-El sistema recibe una oferta de empleo y un CV, extrae los requisitos de la oferta (clasificandolos como obligatorios u opcionales), y evalua el cumplimiento del CV contra cada requisito.
 
-**Mi implementacion**:
-- Uso Structured Output de LangChain para garantizar respuestas en formato Pydantic, evitando parsing manual y errores de formato.
-- El analisis genera puntuacion proporcional: si hay 4 requisitos y se cumplen 3, el score es 75%.
-- Si falta un requisito obligatorio, el candidato queda descartado con score 0%.
+La prueba especifica un sistema que recibe oferta y CV, extrae requisitos clasificandolos como obligatorios u opcionales, y evalua cumplimiento.
+
+**Implementacion**:
+
+- **Structured Output**: Se utiliza `with_structured_output()` de LangChain con modelos Pydantic. Esto garantiza respuestas en formato tipado sin necesidad de parsing manual, eliminando errores de formato.
+
+- **Puntuacion proporcional**: Si hay N requisitos y se cumplen M, el score es `(M/N) * 100`. Si falta un requisito obligatorio, el candidato queda descartado con score 0%.
+
+- **Niveles de confianza**: Cada match incluye nivel de confianza (`high`, `medium`, `low`) con razonamiento explicito del LLM.
 
 ### Fase 2: Entrevista Conversacional
-Si el candidato no fue descartado pero hay requisitos no encontrados en el CV, el sistema inicia una conversacion para recopilar esa informacion.
 
-**Mi implementacion**:
-- Entrevista conversacional preguntando por cada requisito faltante.
-- Tras recopilar respuestas, el sistema recalcula la puntuacion final.
-- Implemente streaming real para mejor experiencia de usuario.
+Si el candidato no fue descartado pero hay requisitos no encontrados en el CV, el sistema inicia conversacion para recopilar informacion adicional.
+
+**Implementacion**:
+
+- **Entrevista por requisito**: El sistema pregunta por cada requisito faltante de forma individual, manteniendo contexto conversacional.
+
+- **Streaming real**: Las respuestas del LLM se muestran token por token para mejor experiencia de usuario.
+
+- **Recalculo automatico**: Tras cada respuesta, el sistema actualiza el estado y recalcula la puntuacion final.
 
 ---
 
-## 2. Decisiones de Diseno
+## 4. Decisiones de Diseno
 
 ### Arquitectura por Capas
 
-Opte por una arquitectura modular con separacion clara de responsabilidades:
+Se implementa separacion clara de responsabilidades:
 
 ```
-backend/
-  nucleo/           # Logica de negocio pura
-  orquestacion/     # Coordinacion y flujos
-  infraestructura/  # Integraciones externas (LLM, persistencia)
-  recursos/         # Configuracion (prompts)
+nucleo/           # Logica de negocio pura, sin dependencias de infraestructura
+orquestacion/     # Coordinacion de flujos y gestion de estados
+infraestructura/  # Integraciones externas (LLM, persistencia, scraping)
+recursos/         # Configuracion centralizada (prompts, hiperparametros)
 ```
 
-**Justificacion**: Esta estructura permite modificar la infraestructura (cambiar de OpenAI a Anthropic, por ejemplo) sin afectar la logica de negocio. Tambien facilita testing y mantenimiento.
+Esta estructura permite modificar la infraestructura (cambiar de proveedor LLM, migrar persistencia) sin afectar la logica de negocio. Cada capa tiene responsabilidad unica y dependencias unidireccionales.
 
-### LangGraph para Orquestacion
+### Orquestacion con LangGraph
 
-Implemente orquestacion con LangGraph, definiendo un grafo de estados donde cada nodo representa una operacion (extraccion, matching, etc.).
+Se utiliza LangGraph para definir un grafo de estados donde cada nodo representa una operacion atomica (extraccion, matching, entrevista). El grafo gestiona:
 
-**Justificacion**: LangGraph ofrece control granular sobre el flujo, manejo nativo de estados, y facilita debugging con trazabilidad. Aunque anade complejidad, lo considere valioso para demostrar competencia en herramientas avanzadas del ecosistema LangChain.
+- Transiciones condicionales basadas en el estado (si hay faltantes, ir a entrevista)
+- Tipado fuerte del estado con `TypedDict`
+- Puntos de control para debugging y trazabilidad
 
-### Structured Output
+### Structured Output con Pydantic
 
-Todas las respuestas del LLM usan Structured Output con modelos Pydantic.
+Todas las interacciones con el LLM utilizan modelos Pydantic como schema de respuesta. Esto proporciona:
 
-**Justificacion**: Elimina la necesidad de parsing manual de respuestas, reduce errores de formato, y proporciona validacion automatica de tipos.
+- Validacion automatica de tipos en tiempo de ejecucion
+- Eliminacion de parsing manual de strings
+- Documentacion implicita del contrato de datos
 
 ### Nomenclatura Bilingue
 
-El codigo usa nomenclatura en castellano con aliases en ingles.
-
-**Justificacion**: Balance entre legibilidad para el contexto espanol de la prueba y compatibilidad con convenciones internacionales.
+El codigo utiliza nomenclatura en castellano con aliases en ingles para metodos publicos. Esto facilita legibilidad en el contexto de la prueba mientras mantiene compatibilidad con convenciones internacionales.
 
 ---
 
-## 3. Funcionalidades Adicionales
+## 5. Calibracion y Versatilidad LLM
 
-Mas alla de los requisitos base, implemente:
+### Proceso de Calibracion
+
+El sistema se calibro exhaustivamente utilizando **GPT-4o de OpenAI** como modelo de referencia. El proceso incluyo:
+
+1. **Ajuste de temperatura por contexto**: Tareas de extraccion requieren determinismo (temp=0.0), mientras entrevistas se benefician de variabilidad moderada (temp=0.3).
+
+2. **Optimizacion de top_p**: Valores altos (0.95) para tareas precisas, reducidos (0.85-0.90) para mayor creatividad controlada.
+
+3. **Validacion cruzada**: Pruebas con multiples ofertas y CVs para verificar consistencia de resultados.
+
+### Compatibilidad Multi-Proveedor
+
+El sistema soporta tres proveedores LLM intercambiables:
+
+| Proveedor | LLM | Embeddings | Notas |
+|-----------|-----|------------|-------|
+| **OpenAI** | GPT-4o, GPT-4o-mini | text-embedding-3-small | Proveedor de referencia para calibracion |
+| **Google** | Gemini 1.5 Pro/Flash | text-embedding-004 | Alternativa con buen balance coste/rendimiento |
+| **Anthropic** | Claude 3.5 Sonnet | No disponible | Solo LLM, sin embeddings propios |
+
+La seleccion de proveedor se realiza desde la interfaz sin necesidad de reiniciar el sistema.
+
+---
+
+## 6. Hiperparametros Detallados
+
+### Configuracion por Fase
+
+| Fase | Contexto | Temperature | Top-P | Descripcion | Impacto |
+|------|----------|-------------|-------|-------------|---------|
+| **Fase 1** | Extraccion | 0.0 | 0.95 | Extraccion de requisitos de la oferta | Determinista: misma entrada produce misma salida. Critico para consistencia en identificacion de requisitos. |
+| **Fase 1** | Matching | 0.1 | 0.95 | Evaluacion de cumplimiento CV vs requisitos | Minima variabilidad para evaluaciones reproducibles. Ligera flexibilidad para manejar sinonimos. |
+| **Fase 2** | Entrevista | 0.3 | 0.90 | Generacion de preguntas conversacionales | Moderada creatividad para preguntas naturales y variadas. Evita repeticiones mecanicas. |
+| **Fase 2** | Evaluacion | 0.2 | 0.95 | Evaluacion de respuestas del candidato | Balance entre precision y capacidad de interpretar respuestas informales. |
+| **RAG** | Chatbot Historial | 0.4 | 0.85 | Consultas sobre evaluaciones previas | Mayor variabilidad para respuestas contextuales y conversacionales. |
+
+### Recomendaciones de Configuracion
+
+- **Alta precision requerida**: Reducir temperature a 0.0-0.1
+- **Conversaciones naturales**: Mantener temperature en 0.3-0.4
+- **Respuestas diversas**: Aumentar temperature hasta 0.5-0.6 (no recomendado para evaluaciones)
+
+---
+
+## 7. Funcionalidades Adicionales
 
 ### Embeddings Semanticos con FAISS
-Busqueda de evidencia en el CV usando similitud semantica, complementando el analisis del LLM.
 
-**Justificacion**: Mejora la precision del matching al encontrar coincidencias semanticas que el LLM podria pasar por alto en descripciones largas.
+Se implementa busqueda vectorial para complementar el analisis del LLM. El sistema genera embeddings del CV y los compara con cada requisito para encontrar coincidencias semanticas que el analisis textual podria omitir.
 
-### RAG para Historial
-Chatbot que consulta evaluaciones previas del usuario mediante Retrieval-Augmented Generation.
+**Dimensiones optimizadas**: OpenAI embeddings configurados a 512 dimensiones (vs 1536 default) para reducir latencia manteniendo precision.
 
-**Justificacion**: Permite al usuario explorar su historial de evaluaciones con lenguaje natural.
+### RAG para Historial de Evaluaciones
+
+El chatbot de historial utiliza Retrieval-Augmented Generation para responder consultas sobre evaluaciones previas. El usuario puede preguntar en lenguaje natural sobre sus resultados anteriores.
 
 ### Scraping con Playwright
-Extraccion de ofertas desde URLs, incluyendo sitios con JavaScript y proteccion basica.
 
-**Justificacion**: Mejora la usabilidad permitiendo pegar URLs directamente en lugar de copiar texto manualmente.
+Se integra Playwright para extraccion de ofertas desde URLs. Esto permite:
 
-### LangSmith
-Integracion opcional para trazabilidad completa de llamadas LLM.
-
-**Justificacion**: Facilita debugging y analisis de costes en desarrollo.
+- Extraccion de paginas con JavaScript dinamico
+- Manejo de sitios con carga diferida
+- Bypass de protecciones basicas anti-scraping
 
 ---
 
-## 4. Trade-offs Tecnicos
+## 8. Interfaz de Usuario
 
-### Docker vs Instalacion Nativa
-Opte por priorizar Docker como metodo de instalacion recomendado.
+Se utiliza Streamlit como framework de interfaz. Esta eleccion proporciona:
 
-**Trade-off**: Mayor tiempo de primera ejecucion (instalacion de Chromium), pero garantiza reproducibilidad y elimina problemas de dependencias del sistema.
+- **Desarrollo rapido**: Prototipado eficiente sin frontend separado
+- **Interactividad nativa**: Widgets reactivos sin JavaScript manual
+- **Compatibilidad Docker**: Despliegue sencillo en contenedor
 
-### Streamlit vs FastAPI + Frontend Separado
-Elegi Streamlit para la interfaz.
-
-**Trade-off**: Menor control sobre la UI comparado con React/Vue, pero desarrollo significativamente mas rapido y suficiente para demostrar funcionalidad.
-
-### Temperatura Diferenciada
-Use temperaturas distintas por fase: baja (0.1) para extraccion/matching, media (0.5) para entrevista.
-
-**Trade-off**: Extraccion requiere determinismo; entrevista se beneficia de variabilidad para conversaciones naturales.
+La interfaz implementa el sistema de diseno corporativo Velora con paleta de colores turquesa, tipografia Inter, y componentes visuales consistentes.
 
 ---
 
-## 5. Escalabilidad y Mantenibilidad
+## 9. Despliegue con Docker
 
-### Configuracion Centralizada
-Toda la configuracion de modelos, temperaturas y prompts esta centralizada en archivos dedicados, evitando valores hardcodeados.
+Se utiliza Docker como metodo de instalacion recomendado. El Dockerfile implementa:
 
-### Proveedores Intercambiables
-La fabrica de LLM permite cambiar entre OpenAI, Google y Anthropic con un parametro, cumpliendo el requisito de intercambiabilidad.
-
-### Persistencia Modular
-La capa de persistencia usa abstraccion que permite migrar de archivos JSON a base de datos sin cambiar logica de negocio.
-
----
-
-## 6. Posibles Mejoras Futuras
-
-- **Base de datos**: Migrar de JSON a PostgreSQL para escalabilidad.
-- **Autenticacion**: Implementar sistema de usuarios con OAuth.
-- **Cache de embeddings**: Reducir costes reutilizando embeddings de ofertas recurrentes.
-- **Batch processing**: Evaluar multiples candidatos en paralelo.
+- **Multi-stage build**: Separacion de dependencias y codigo para imagen final optimizada
+- **Usuario no-root**: Ejecucion con usuario `velora` por seguridad
+- **Playwright preinstalado**: Chromium incluido para scraping funcional out-of-the-box
+- **Health checks**: Verificacion de disponibilidad para orquestadores
 
 ---
 
 Carlos Vega | Enero 2025
-
