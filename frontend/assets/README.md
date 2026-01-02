@@ -8,6 +8,7 @@ Los logos de Velora están implementados directamente en el código como SVG inl
 
 - **Logo Principal**: .png del texto "velora" con gradiente turquesa en la V y A
 - **Logo Reducido**: Icono "VA" compacto para el sidebar
+- **Logo Apple-Icon**: Icono "VA" para el icono de la barra de navegacion en web.
 
 ## Paleta de Colores Velora
 
@@ -21,15 +22,3 @@ Los logos de Velora están implementados directamente en el código como SVG inl
 | Success | `#10B981` | Estados positivos |
 | Error | `#EF4444` | Estados de error |
 | Warning | `#F59E0B` | Advertencias |
-
-## Tipografía
-
-- **Font Family**: Inter (Google Fonts)
-- **Fallback**: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif
-
-## Notas de Implementación
-
-- Los logos SVG se renderizan inline para máxima compatibilidad
-- El gradiente usa `linearGradient` para transiciones suaves
-- Los colores están definidos como constantes Python en `streamlit_app.py`
-
