@@ -1,4 +1,4 @@
-# Assets - Velora Auto Evaluator
+# Assets - Velora Prueba Técnica
 
 Este directorio contiene los recursos visuales de la aplicación.
 
