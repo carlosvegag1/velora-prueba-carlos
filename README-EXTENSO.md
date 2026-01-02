@@ -1,6 +1,6 @@
 # Documentacion Tecnica Extendida
 
-Sistema de Evaluacion de Candidatos con IA | Carlos Vega | Enero 2025
+Sistema de Evaluacion de Candidatos con IA | Carlos Vega | Enero 2026
 
 ---
 
