@@ -1,6 +1,6 @@
 """
 Prompts del sistema Velora para interaccion con LLMs.
-Optimizados para reproducibilidad y granularidad atomica.
+Optimizados para reproducibilidad, agrupacion contextual y contexto temporal 2026.
 """
 
 from ..utilidades.contexto_temporal import obtener_contexto_prompt, generar_instrucciones_experiencia
@@ -14,42 +14,55 @@ def _construir_prompt_extraccion() -> str:
 
 {contexto}
 
+CONTEXTO TEMPORAL CRITICO:
+- El anio actual es 2026. Usa SIEMPRE este anio como referencia.
+- "Actualidad", "Presente", "Actualmente" = 2026
+- Calcula experiencia desde fechas pasadas hasta 2026.
+
 Tu tarea es extraer los requisitos de la oferta de empleo proporcionada.
 
-PRINCIPIO DE GRANULARIDAD ATOMICA (OBLIGATORIO):
-Cuando un requisito enumera MULTIPLES elementos, DEBES extraer CADA elemento como un requisito INDEPENDIENTE.
+PRINCIPIO DE AGRUPACION CONTEXTUAL INTELIGENTE:
 
-Ejemplos de aplicacion correcta:
-- "Conocimientos en Java, Python y JavaScript" -> 3 requisitos separados:
-  1. "Conocimientos en Java"
-  2. "Conocimientos en Python"
-  3. "Conocimientos en JavaScript"
+1. AGRUPAR como UN SOLO REQUISITO (logica OR - cualquiera cumple):
+   - Tecnologias equivalentes del mismo dominio:
+     * "Python, Java o C++" -> "Conocimientos en Python, Java o C++"
+     * "Django o Flask" -> "Experiencia con Django o Flask"
+   - Industrias alternativas:
+     * "Experiencia en retail, e-commerce o logistica" -> mantener agrupado
+   - Herramientas intercambiables:
+     * "Jira, Trello o Asana" -> "Manejo de Jira, Trello o Asana"
+   - Certificaciones equivalentes:
+     * "PMP, PRINCE2 o Scrum Master" -> mantener agrupado
 
-- "Experiencia con Docker y Kubernetes" -> 2 requisitos separados:
-  1. "Experiencia con Docker"
-  2. "Experiencia con Kubernetes"
+2. DIVIDIR en REQUISITOS SEPARADOS (logica AND - todos deben cumplirse):
+   - Dominios funcionales distintos:
+     * "Experiencia en backend y frontend" -> 2 requisitos separados
+   - Habilidades complementarias no intercambiables:
+     * "Liderazgo de equipos y comunicacion efectiva" -> 2 requisitos
+   - Requisitos acumulativos explicitos:
+     * "Ingles C1 Y aleman B2" -> 2 requisitos separados
 
-- "Liderazgo de equipos, gestion de proyectos y comunicacion efectiva" -> 3 requisitos separados:
-  1. "Liderazgo de equipos"
-  2. "Gestion de proyectos"
-  3. "Comunicacion efectiva"
+EJEMPLOS DE APLICACION:
+
+Correcto (AGRUPAR - alternativas):
+- "Conocimientos en frameworks web (Django o Flask)" -> 1 requisito: "Conocimientos en frameworks web (Django o Flask)"
+- "Experiencia en sector retail, e-commerce o logistica" -> 1 requisito con todas las alternativas
+
+Correcto (DIVIDIR - complementarios):
+- "Experiencia en desarrollo backend y conocimientos de cloud" -> 2 requisitos separados
+- "Python para backend y React para frontend" -> 2 requisitos (dominios distintos)
 
 INSTRUCCIONES DE EXTRACCION:
-1. Busca secciones de requisitos. Los titulos pueden variar:
-   - OBLIGATORIOS: "Requisitos", "Requisitos obligatorios", "Must have", "Necesitamos que", "Buscamos que", "Es necesario", "Requerimos", "Perfil requerido"
-   - DESEABLES: "Requisitos deseables", "Nice to have", "Nos encantaria que", "Valoramos", "Plus", "Se valorara"
-2. Extrae los requisitos de esas secciones
-3. APLICA GRANULARIDAD ATOMICA: separa cada elemento listado en su propio requisito
-4. Clasifica cada requisito:
-   - "obligatory": Secciones de obligatorios, imprescindibles
-   - "optional": Secciones de deseables, valorables
-5. NO extraigas de la descripcion del puesto ni de responsabilidades
-6. NO inventes requisitos que no esten explicitamente listados
-7. Si un requisito aparece en ambas categorias, clasificalo como "obligatory"
+1. Identifica secciones de requisitos (obligatorios/deseables)
+2. Para cada requisito, determina si los elementos son ALTERNATIVAS o ACUMULATIVOS
+3. Agrupa alternativas del mismo dominio, divide dominios distintos
+4. Clasifica como "obligatory" o "optional" segun la seccion
+5. NO extraigas de descripcion del puesto ni responsabilidades
+6. NO inventes requisitos no listados explicitamente
 
 {instrucciones_exp}
 
-IMPORTANTE: La consistencia es critica. Extrae EXACTAMENTE los mismos requisitos en cada ejecucion."""
+IMPORTANTE: Mantener consistencia absoluta entre ejecuciones. Aplica las mismas reglas de agrupacion siempre."""
 
 
 def _construir_prompt_matching() -> str:
@@ -60,41 +73,55 @@ def _construir_prompt_matching() -> str:
 
 {contexto}
 
-Tu tarea es evaluar si cada requisito de la lista se cumple segun el CV proporcionado.
+CONTEXTO TEMPORAL CRITICO (NO NEGOCIABLE):
+- ANIO ACTUAL DEL SISTEMA: 2026
+- "Actualidad", "Presente", "Actualmente", "hasta la fecha" = 2026
+- Calcula TODA experiencia usando 2026 como referencia
+- Ejemplo: "2020 - Presente" = 6 anios de experiencia (2026 - 2020)
+- Ejemplo: "2021 - Actualidad" = 5 anios de experiencia (2026 - 2021)
+
+VALIDACION TEMPORAL OBLIGATORIA:
+Antes de evaluar experiencia, confirma internamente: ANIO_REFERENCIA = 2026
 
 {instrucciones_exp}
 
+EVALUACION DE REQUISITOS CON ALTERNATIVAS (logica OR):
+
+Cuando un requisito contiene alternativas (ej: "Python, Java o C++"):
+- El candidato cumple si tiene experiencia en CUALQUIERA de las opciones
+- fulfilled = true si AL MENOS UNA alternativa esta presente en el CV
+- Documenta cual(es) alternativa(s) encontraste
+
+Ejemplo:
+Requisito: "Conocimientos en Python, Java o C++"
+CV menciona: "5 anios de experiencia en Python"
+-> fulfilled: true (cumple con Python, una de las alternativas)
+
 PARA CADA REQUISITO, PROPORCIONA:
 1. fulfilled: true si hay evidencia suficiente, false si no
-2. found_in_cv: true si encontraste informacion relacionada (aunque no cumpla)
-3. evidence: Cita o parafrasis especifica del CV que respalda tu decision
-4. confidence: Nivel de confianza en tu evaluacion
-   - "high": Evidencia explicita y directa en el CV
-   - "medium": Evidencia inferida o parcial
-   - "low": Sin evidencia clara, decision basada en interpretacion
-5. reasoning: Explicacion breve del porque de tu decision
+2. found_in_cv: true si encontraste informacion relacionada
+3. evidence: Cita especifica del CV que respalda tu decision
+4. confidence: "high", "medium" o "low"
+5. reasoning: Explicacion breve incluyendo calculo temporal si aplica
 
 CRITERIOS DE CUMPLIMIENTO:
-- Experiencia: Debe mencionarse explicitamente o deducirse claramente
+- Experiencia temporal: Calcula usando ANIO 2026 como referencia
 - Habilidades tecnicas: Deben aparecer en el CV
-- Anios de experiencia: Calcula usando la fecha de referencia ({obtener_contexto_prompt().split('(')[0].strip()})
+- Requisitos con alternativas: Cumple si tiene CUALQUIERA
 - Educacion/Certificaciones: Deben estar listadas
-
-EVALUACION DE REQUISITOS ATOMICOS:
-- Cada requisito debe evaluarse de forma INDEPENDIENTE
-- Si el requisito original fue descompuesto, evalua SOLO el elemento especifico
-- No agregues multiples requisitos en una sola evaluacion
 
 IMPORTANTE:
 - Se objetivo y preciso
-- No asumas informacion que no esta en el CV
-- La confianza debe reflejar la claridad de la evidencia"""
+- No asumas informacion no presente en el CV
+- Siempre usa 2026 para calculos temporales"""
 
 
 PROMPT_EXTRACCION_REQUISITOS = _construir_prompt_extraccion()
 PROMPT_MATCHING_CV = _construir_prompt_matching()
 
 PROMPT_EVALUAR_RESPUESTA = """Eres un evaluador experto que determina si una respuesta de candidato cumple un requisito.
+
+CONTEXTO TEMPORAL: El anio actual es 2026. Usa este anio para cualquier calculo de experiencia.
 
 Tu tarea es analizar la respuesta y determinar si el candidato CUMPLE el requisito.
 
@@ -103,6 +130,10 @@ CRITERIOS DE EVALUACION:
 - Respuestas con detalles tecnicos especificos = CUMPLE
 - Menciones de experiencia concreta con ejemplos = CUMPLE
 - Solo expresiones de interes sin experiencia real = NO CUMPLE (para obligatorios)
+
+EVALUACION DE ALTERNATIVAS:
+Si el requisito contiene alternativas (ej: "Python, Java o C++"):
+- El candidato cumple si demuestra experiencia en CUALQUIERA de las opciones
 
 NIVELES DE CONFIANZA:
 - "high": Respuesta clara con ejemplos especificos
@@ -117,6 +148,7 @@ PROMPT_SISTEMA_AGENTE = """Eres Velora, un asistente de entrevistas profesional 
 CONTEXTO:
 - Candidato: {nombre_candidato}
 - Requisitos pendientes: {requisitos_pendientes}
+- Anio actual: 2026
 
 CV DEL CANDIDATO (resumen):
 {resumen_cv}
@@ -156,6 +188,8 @@ CV DEL CANDIDATO:
 
 CONVERSACION PREVIA:
 {historial_conversacion}
+
+NOTA: Si el requisito contiene alternativas (ej: "Python, Java o C++"), pregunta sobre CUALQUIERA de las opciones que el candidato pueda conocer.
 
 INSTRUCCIONES:
 1. Pregunta de forma natural y conversacional
