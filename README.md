@@ -23,7 +23,7 @@ cp .env.example .env   (aunque no es necesario modificarlo, es obligatorio que e
 docker compose up --build
 ```
 
-Acceder a **http://localhost:8501**
+Acceder a **[http://localhost:8501](http://localhost:8501)**
 
 **Nota sobre API Keys**: Las credenciales de los proveedores LLM (OpenAI, Google, Anthropic) se configuran directamente desde la **interfaz web**. No es necesario modificar archivos de configuracion ni variables de entorno en el backend.
 
@@ -52,6 +52,10 @@ flowchart LR
         SCORE2[Puntuacion Final]
     end
 
+    subgraph Observabilidad
+        LS[LangSmith\nTracing & Evaluacion]
+    end
+
     subgraph Salida
         RES[Resultado de Evaluacion]
         HIST[Historial RAG]
@@ -67,6 +71,11 @@ flowchart LR
     EVAL --> SCORE2
     SCORE2 --> RES
     RES --> HIST
+
+    EXT -.-> LS
+    MAT -.-> LS
+    ENT -.-> LS
+    EVAL -.-> LS
 ```
 
 ---
@@ -74,8 +83,9 @@ flowchart LR
 ## Instalacion Manual
 
 ### Requisitos
-- Python 3.9+
-- Navegador Chromium (instalado automaticamente via Playwright)
+
+* Python 3.9+
+* Navegador Chromium (instalado automaticamente via Playwright)
 
 ### Pasos
 
@@ -96,13 +106,18 @@ Las **API keys** se introducen en la interfaz web al iniciar la aplicacion.
 
 ### Por que estas tecnologias
 
-| Componente | Tecnologia | Justificacion |
-|------------|------------|---------------|
-| **Orquestacion** | LangGraph | Control granular sobre flujos multi-agente con estados tipados |
-| **LLM Integration** | LangChain | Abstraccion sobre multiples proveedores, structured output nativo |
-| **Embeddings** | FAISS | Busqueda vectorial eficiente para matching semantico |
-| **Frontend** | Streamlit | Desarrollo rapido de interfaces interactivas para prototipado |
-| **Scraping** | Playwright | Extraccion de contenido de paginas con JavaScript dinamico |
+| Componente                      | Tecnologia | Justificacion                                                               |
+| ------------------------------- | ---------- | --------------------------------------------------------------------------- |
+| **Orquestacion**                | LangGraph  | Control granular sobre flujos multi-agente con estados tipados              |
+| **LLM Integration**             | LangChain  | Abstraccion sobre multiples proveedores, structured output nativo           |
+| **Observabilidad & Evaluacion** | LangSmith  | Trazabilidad completa de ejecuciones LLM, debugging y evaluacion de prompts |
+| **Embeddings**                  | FAISS      | Busqueda vectorial eficiente para matching semantico                        |
+| **Frontend**                    | Streamlit  | Desarrollo rapido de interfaces interactivas para prototipado               |
+| **Scraping**                    | Playwright | Extraccion de contenido de paginas con JavaScript dinamico                  |
+
+### Observabilidad con LangSmith
+
+El sistema integra **LangSmith** para registrar trazas completas de cada ejecucion: llamadas a LLM, estados del grafo LangGraph, prompts, respuestas y tiempos. Esto permite **debugging avanzado**, evaluacion de calidad y comparacion de modelos/prompts durante la calibracion.
 
 ### Calibracion del Sistema
 
@@ -114,28 +129,29 @@ El sistema se calibro exhaustivamente utilizando **GPT-4o de OpenAI** como model
 
 ## Hiperparametros por Fase
 
-| Fase | Contexto | Temperature | Top-P | Comportamiento |
-|------|----------|-------------|-------|----------------|
-| **Fase 1** | Extraccion | 0.0 | 0.95 | Determinista, maxima precision |
-| **Fase 1** | Matching | 0.1 | 0.95 | Baja variabilidad, consistencia en evaluaciones |
-| **Fase 2** | Entrevista | 0.3 | 0.90 | Moderada creatividad para conversacion natural |
-| **Fase 2** | Evaluacion | 0.2 | 0.95 | Balance entre precision y flexibilidad |
-| **RAG** | Chatbot Historial | 0.4 | 0.85 | Mayor variabilidad para respuestas contextuales |
+| Fase       | Contexto          | Temperature | Top-P | Comportamiento                                  |
+| ---------- | ----------------- | ----------- | ----- | ----------------------------------------------- |
+| **Fase 1** | Extraccion        | 0.0         | 0.95  | Determinista, maxima precision                  |
+| **Fase 1** | Matching          | 0.1         | 0.95  | Baja variabilidad, consistencia en evaluaciones |
+| **Fase 2** | Entrevista        | 0.3         | 0.90  | Moderada creatividad para conversacion natural  |
+| **Fase 2** | Evaluacion        | 0.2         | 0.95  | Balance entre precision y flexibilidad          |
+| **RAG**    | Chatbot Historial | 0.4         | 0.85  | Mayor variabilidad para respuestas contextuales |
 
 ---
 
 ## Cumplimiento de Requisitos
 
-| Requisito | Implementacion |
-|-----------|----------------|
-| Fase 1: Analisis CV vs Oferta | **Structured Output** con Pydantic para extraccion y matching |
-| Requisitos obligatorios vs opcionales | Flag `discarded` cuando falta obligatorio, score 0% |
-| Puntuacion proporcional | `score = (cumplidos / total) * 100` |
-| Fase 2: Entrevista conversacional | **Streaming real** preguntando por requisitos no encontrados |
-| Recalculo post-entrevista | Reevaluacion automatica tras respuestas |
-| LangChain con proveedores intercambiables | Fabrica LLM con soporte OpenAI, Google, Anthropic |
-| Docker | Multi-stage build optimizado con Playwright preinstalado |
-| Interfaz UI | Streamlit con diseno corporativo Velora |
+| Requisito                                 | Implementacion                                                |
+| ----------------------------------------- | ------------------------------------------------------------- |
+| Fase 1: Analisis CV vs Oferta             | **Structured Output** con Pydantic para extraccion y matching |
+| Requisitos obligatorios vs opcionales     | Flag `discarded` cuando falta obligatorio, score 0%           |
+| Puntuacion proporcional                   | `score = (cumplidos / total) * 100`                           |
+| Fase 2: Entrevista conversacional         | **Streaming real** preguntando por requisitos no encontrados  |
+| Recalculo post-entrevista                 | Reevaluacion automatica tras respuestas                       |
+| LangChain con proveedores intercambiables | Fabrica LLM con soporte OpenAI, Google, Anthropic             |
+| Observabilidad LLM                        | **LangSmith** para trazas, evaluacion y debugging             |
+| Docker                                    | Multi-stage build optimizado con Playwright preinstalado      |
+| Interfaz UI                               | Streamlit con diseno corporativo Velora                       |
 
 ---
 
@@ -162,6 +178,7 @@ docs/
 Introduce la API key en el panel lateral de la interfaz web. No se requiere configuracion en archivos.
 
 **Docker: "Port 8501 already in use"**
+
 ```bash
 docker compose down
 # O cambiar puerto: VELORA_PORT=8502 docker compose up
