@@ -6,7 +6,7 @@ Este directorio contiene los recursos visuales de la aplicación.
 
 Los logos de Velora están implementados directamente en el código como SVG inline para evitar dependencias de archivos externos:
 
-- **Logo Principal**: SVG del texto "velora" con gradiente turquesa en la V y A
+- **Logo Principal**: .png del texto "velora" con gradiente turquesa en la V y A
 - **Logo Reducido**: Icono "VA" compacto para el sidebar
 
 ## Paleta de Colores Velora
