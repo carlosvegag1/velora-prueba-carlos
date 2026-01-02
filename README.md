@@ -12,7 +12,7 @@ Para visualizar el sistema operando a pleno rendimiento, consulta la **videodemo
 
 ---
 
-## Inicio Rapido con Docker
+## Inicio Rapido con Docker (Windows)
 
 ```bash
 git clone https://github.com/carlosvegag1/velora-prueba-carlos.git
