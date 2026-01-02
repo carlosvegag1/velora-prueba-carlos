@@ -75,15 +75,29 @@ def _construir_prompt_matching() -> str:
 
 CONTEXTO TEMPORAL CRITICO (NO NEGOCIABLE):
 - ANIO ACTUAL DEL SISTEMA: 2026
-- "Actualidad", "Presente", "Actualmente", "hasta la fecha" = 2026
+- "Actualidad", "Presente", "Actualmente", "hasta la fecha" = enero 2026
 - Calcula TODA experiencia usando 2026 como referencia
-- Ejemplo: "2020 - Presente" = 6 anios de experiencia (2026 - 2020)
-- Ejemplo: "2021 - Actualidad" = 5 anios de experiencia (2026 - 2021)
-
-VALIDACION TEMPORAL OBLIGATORIA:
-Antes de evaluar experiencia, confirma internamente: ANIO_REFERENCIA = 2026
 
 {instrucciones_exp}
+
+CALCULO DE EXPERIENCIA ACUMULADA (CRITICO):
+
+Para requisitos de "X anios de experiencia en [tecnologia/habilidad]":
+1. IDENTIFICA TODOS los puestos donde el candidato uso esa tecnologia/habilidad
+2. SUMA la duracion de TODOS esos puestos
+3. La experiencia es ACUMULATIVA, no solo del puesto actual
+
+EJEMPLO DE CALCULO CORRECTO:
+Requisito: "3 anios de experiencia en Python"
+CV:
+- Puesto A (Abril 2023 - Actualidad): Desarrollo Python -> ~2.75 anios
+- Puesto B (Enero 2022 - Abril 2023): Python Data Science -> ~1.25 anios
+TOTAL ACUMULADO: 2.75 + 1.25 = 4 anios de experiencia en Python
+RESULTADO: fulfilled = true (4 anios >= 3 anios requeridos)
+
+EJEMPLO DE ERROR A EVITAR:
+NO evaluar solo el puesto actual ignorando experiencia previa
+NO decir "solo tiene 2.75 anios" cuando hay experiencia adicional
 
 EVALUACION DE REQUISITOS CON ALTERNATIVAS (logica OR):
 
@@ -92,28 +106,26 @@ Cuando un requisito contiene alternativas (ej: "Python, Java o C++"):
 - fulfilled = true si AL MENOS UNA alternativa esta presente en el CV
 - Documenta cual(es) alternativa(s) encontraste
 
-Ejemplo:
-Requisito: "Conocimientos en Python, Java o C++"
-CV menciona: "5 anios de experiencia en Python"
--> fulfilled: true (cumple con Python, una de las alternativas)
-
 PARA CADA REQUISITO, PROPORCIONA:
 1. fulfilled: true si hay evidencia suficiente, false si no
 2. found_in_cv: true si encontraste informacion relacionada
 3. evidence: Cita especifica del CV que respalda tu decision
 4. confidence: "high", "medium" o "low"
-5. reasoning: Explicacion breve incluyendo calculo temporal si aplica
+5. reasoning: Explicacion breve CON CALCULO TEMPORAL DETALLADO si aplica
+
+FORMATO DE REASONING PARA EXPERIENCIA TEMPORAL:
+"Experiencia acumulada: Puesto1 (X anios) + Puesto2 (Y anios) = Z anios total. Requisito: N anios. Cumple: si/no"
 
 CRITERIOS DE CUMPLIMIENTO:
-- Experiencia temporal: Calcula usando ANIO 2026 como referencia
+- Experiencia temporal: SUMA experiencia de TODOS los puestos relevantes
 - Habilidades tecnicas: Deben aparecer en el CV
 - Requisitos con alternativas: Cumple si tiene CUALQUIERA
 - Educacion/Certificaciones: Deben estar listadas
 
 IMPORTANTE:
-- Se objetivo y preciso
-- No asumas informacion no presente en el CV
-- Siempre usa 2026 para calculos temporales"""
+- SIEMPRE suma experiencia de multiples puestos
+- Usa 2026 como anio de referencia para "Actualidad"
+- No subestimes la experiencia ignorando puestos anteriores"""
 
 
 PROMPT_EXTRACCION_REQUISITOS = _construir_prompt_extraccion()
