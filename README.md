@@ -17,6 +17,9 @@ Para visualizar el sistema operando a pleno rendimiento, consulta la **videodemo
 ```bash
 git clone https://github.com/carlosvegag1/velora-prueba-carlos.git
 cd velora-prueba-carlos
+python -m venv venv
+venv\Scripts\activate
+cp .env.example .env   (aunque no es necesario modificarlo, es obligatorio que exista)
 docker compose up --build
 ```
 
