@@ -271,4 +271,4 @@ Se utiliza Docker como metodo de instalacion recomendado. El Dockerfile implemen
 
 ---
 
-Carlos Vega | Enero 2025
+Carlos Vega | Enero 2026
