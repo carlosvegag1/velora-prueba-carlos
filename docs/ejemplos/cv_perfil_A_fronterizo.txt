@@ -1,0 +1,41 @@
+CURRÍCULUM VITAE
+
+DATOS PERSONALES
+Nombre: María García López
+Email: maria.garcia@email.com
+Teléfono: +34 612 345 678
+Ubicación: Madrid, España
+
+FORMACIÓN ACADÉMICA
+- Grado en Ingeniería Informática (2016-2020)
+  Universidad Politécnica de Madrid
+- Certificación Oracle Database 12c Administrator (2021)
+
+IDIOMAS
+- Español: Nativo
+- Inglés: Nivel avanzado (C1 Cambridge)
+
+EXPERIENCIA PROFESIONAL
+
+Administradora de Bases de Datos Junior
+TechSolutions S.L. | Madrid | Enero 2021 - Actualidad (3 años)
+- Administración de bases de datos Oracle 12c y 19c
+- Gestión de SQL Server y PostgreSQL
+- Configuración y mantenimiento de Oracle RAC en entornos de producción
+- Implementación de Oracle Dataguard para alta disponibilidad
+- Administración de Grid Infrastructure
+- Soporte de sistemas Linux Red Hat y Windows Server
+
+Desarrolladora Backend
+StartupTech | Madrid | Junio 2020 - Diciembre 2020 (6 meses)
+- Desarrollo de aplicaciones con Python y SQL
+- Mantenimiento de bases de datos MySQL
+- Scripts de automatización en Bash
+
+HABILIDADES TÉCNICAS
+- Bases de datos: Oracle 12c/19c, SQL Server, PostgreSQL, MySQL
+- Oracle: RAC, Dataguard, Grid Infrastructure
+- Sistemas operativos: Linux Red Hat, CentOS, Windows Server
+- Lenguajes: SQL, PL/SQL, Python, Bash
+- Herramientas: SQL Developer, TOAD, Git
+

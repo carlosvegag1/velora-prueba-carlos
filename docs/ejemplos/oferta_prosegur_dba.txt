@@ -1,0 +1,29 @@
+Administrador/a de Base de Datos - Prosegur
+
+Ubicación: Madrid, España
+Departamento: TI, Cyber & Innovación
+Tipo: Tiempo completo
+
+REQUISITOS:
+
+Obligatorios:
+- Graduado o licenciado en ingeniería de sistemas y/o carreras similares
+- Nivel avanzado de inglés
+- Entre 2-5 años de experiencia comprobable en puestos similares
+- Experiencia en bases de datos: Oracle y SQL
+- Experiencia en administración de RAC, Grid Infrastructure, Dataguard (versiones 12c/19c)
+- Experiencia en sistemas operativos: Linux Red Hat y Microsoft Windows
+
+Valorables (opcionales):
+- Conocimientos de RMAN
+- Conocimientos en procesos de Upgrade y aplicación de Parches
+- Manejo de entornos Cloud como Azure o Google Cloud
+
+QUÉ OFRECEMOS:
+- Formar parte de un equipo internacional
+- Trabajar en un entorno dinámico con excelente ambiente laboral
+- Participar en proyectos estratégicos y disruptivos
+- Crecer profesionalmente con un plan de carrera personalizado
+- Acceder a un plan formativo de primer nivel
+- Disponer de flexibilidad horaria y beneficios sociales
+

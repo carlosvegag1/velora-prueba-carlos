@@ -1,0 +1,45 @@
+CURRÍCULUM VITAE
+
+DATOS PERSONALES
+Nombre: Pedro Sánchez Martín
+Email: pedro.sanchez@email.com
+Teléfono: +34 654 321 098
+Ubicación: Barcelona, España
+
+FORMACIÓN ACADÉMICA
+- Ciclo Formativo de Grado Superior en Desarrollo de Aplicaciones Web (2019-2021)
+  IES Tecnológico de Barcelona
+- Curso de Introducción a SQL (40 horas) - Udemy (2022)
+
+IDIOMAS
+- Español: Nativo
+- Inglés: Nivel básico (A2)
+- Catalán: Nativo
+
+EXPERIENCIA PROFESIONAL
+
+Desarrollador Web Junior
+WebAgency Barcelona | Barcelona | Septiembre 2021 - Actualidad (2 años)
+- Desarrollo de páginas web con HTML, CSS y JavaScript
+- Creación de aplicaciones con PHP y MySQL
+- Mantenimiento de sitios WordPress
+- Consultas básicas SQL para reportes
+
+Prácticas de Desarrollo
+StartupLocal | Barcelona | Marzo 2021 - Agosto 2021 (6 meses)
+- Apoyo en desarrollo frontend
+- Pruebas de aplicaciones web
+- Documentación técnica
+
+HABILIDADES TÉCNICAS
+- Frontend: HTML5, CSS3, JavaScript, React (básico)
+- Backend: PHP, Node.js (básico)
+- Bases de datos: MySQL (consultas básicas)
+- CMS: WordPress, Prestashop
+- Herramientas: Git, VS Code, Figma
+
+OTROS DATOS
+- Disponibilidad para viajar
+- Carnet de conducir B
+- Interés en aprender nuevas tecnologías
+

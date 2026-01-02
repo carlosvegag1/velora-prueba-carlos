@@ -1,0 +1,58 @@
+CURRÍCULUM VITAE
+
+DATOS PERSONALES
+Nombre: Carlos Rodríguez Fernández
+Email: carlos.rodriguez@email.com
+Teléfono: +34 698 765 432
+Ubicación: Madrid, España
+
+FORMACIÓN ACADÉMICA
+- Máster en Administración de Bases de Datos (2018-2019)
+  Universidad Complutense de Madrid
+- Grado en Ingeniería de Sistemas Informáticos (2013-2017)
+  Universidad Carlos III de Madrid
+- Oracle Certified Professional DBA (2020)
+- Microsoft Certified: Azure Database Administrator Associate (2022)
+- AWS Certified Database - Specialty (2023)
+
+IDIOMAS
+- Español: Nativo
+- Inglés: Nivel avanzado (C2 Proficiency)
+- Alemán: Nivel intermedio (B1)
+
+EXPERIENCIA PROFESIONAL
+
+Senior Database Administrator
+Multinacional Financiera S.A. | Madrid | Marzo 2021 - Actualidad (4 años)
+- Administración de clusters Oracle RAC 19c en entornos críticos de producción
+- Implementación y gestión de Oracle Dataguard para disaster recovery
+- Administración de Grid Infrastructure en arquitecturas complejas
+- Gestión de backups con Oracle RMAN (estrategias incrementales y full)
+- Procesos de Upgrade de Oracle 12c a 19c en múltiples entornos
+- Aplicación de parches de seguridad y PSU trimestrales
+- Migración de bases de datos a Azure SQL y Google Cloud SQL
+- Gestión de entornos híbridos cloud (Azure + on-premise)
+- Administración de servidores Linux Red Hat 7/8 y Windows Server 2019
+
+Database Administrator
+Consultora IT Global | Madrid | Enero 2019 - Febrero 2021 (2 años)
+- Administración de Oracle 12c y SQL Server 2017
+- Implementación de Oracle Dataguard
+- Gestión de backups con RMAN
+- Soporte de sistemas Linux y Windows
+- Optimización de rendimiento y tuning de queries
+
+HABILIDADES TÉCNICAS
+- Oracle: RAC 12c/19c, Dataguard, Grid Infrastructure, RMAN, ASM
+- Cloud: Azure (SQL Database, VMs), Google Cloud Platform (Cloud SQL, Compute Engine)
+- SQL Server: 2016, 2017, 2019, Always On
+- Sistemas: Linux Red Hat 7/8, CentOS, Windows Server 2016/2019
+- Scripting: SQL, PL/SQL, Python, PowerShell, Bash
+- Herramientas: Oracle Enterprise Manager, Azure Portal, Terraform
+
+CERTIFICACIONES
+- Oracle Certified Professional: Database Administrator
+- Microsoft Certified: Azure Database Administrator Associate
+- AWS Certified Database - Specialty
+- ITIL Foundation v4
+

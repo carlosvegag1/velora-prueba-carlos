@@ -1,50 +1,25 @@
-# =============================================================================
-# Velora - Docker Compose para Orquestacion
-# =============================================================================
-# Uso:
-#   Desarrollo:  docker compose up --build
-#   Acceso:      http://localhost:8501
-#   Detener:     docker compose down
-#   Logs:        docker compose logs -f velora
-# =============================================================================
+# Uso: docker compose up --build
+# Acceso: http://localhost:8501
 
 services:
-  # ---------------------------------------------------------------------------
-  # Servicio principal: Aplicacion Velora
-  # ---------------------------------------------------------------------------
   velora:
     build:
       context: .
       dockerfile: Dockerfile
       target: production
     container_name: velora-app
-    
-    # Gestion de secretos via archivo .env
     env_file:
       - .env
-    
-    # Variables de entorno adicionales
     environment:
-      # Streamlit
       - STREAMLIT_SERVER_PORT=8501
       - STREAMLIT_SERVER_ADDRESS=0.0.0.0
       - STREAMLIT_SERVER_HEADLESS=true
-      # Python
       - PYTHONUNBUFFERED=1
       - PYTHONDONTWRITEBYTECODE=1
-    
-    # Mapeo de puertos
     ports:
       - "${VELORA_PORT:-8501}:8501"
-    
-    # Volumenes persistentes
     volumes:
-      # Datos de usuarios (evaluaciones, historial)
       - velora-data:/app/data
-      # Volumenes locales para desarrollo (comentar en produccion)
-      # - ./data:/app/data
-    
-    # Configuracion de recursos
     deploy:
       resources:
         limits:
@@ -53,42 +28,27 @@ services:
         reservations:
           cpus: '0.5'
           memory: 1G
-    
-    # Politica de reinicio
     restart: unless-stopped
-    
-    # Health check
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-    
-    # Red
     networks:
       - velora-network
-    
-    # Logging estructurado
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
 
-# -----------------------------------------------------------------------------
-# Volumenes persistentes
-# -----------------------------------------------------------------------------
 volumes:
   velora-data:
     driver: local
     name: velora-persistent-data
 
-# -----------------------------------------------------------------------------
-# Red interna
-# -----------------------------------------------------------------------------
 networks:
   velora-network:
     driver: bridge
     name: velora-net
-
