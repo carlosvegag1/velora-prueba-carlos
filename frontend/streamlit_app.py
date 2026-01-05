@@ -1146,6 +1146,9 @@ def display_phase1_results(phase1_result):
                         unsafe_allow_html=True
                     )
                 
+                if req.evidencia:
+                    st.caption(f"Evidencia: {req.evidencia[:300]}...")
+                
                 reasoning = getattr(req, 'reasoning', None)
                 if reasoning:
                     st.caption(f"Razonamiento: {reasoning}")

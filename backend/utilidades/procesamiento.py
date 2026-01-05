@@ -75,7 +75,6 @@ def procesar_coincidencias(
             continue
         procesados.add(desc_lower)
         
-        # Buscar requisito original
         original = mapa_requisitos.get(desc_lower)
         if not original:
             for clave, req in mapa_requisitos.items():
@@ -86,23 +85,28 @@ def procesar_coincidencias(
         if not original:
             continue
         
-        # Mapear confianza
         confianza_str = coincidencia.get("confidence", "medium")
         confianza = NivelConfianza(confianza_str) if confianza_str else NivelConfianza.MEDIO
         
-        # Score semántico
         puntuacion_semantica = None
+        evidencia_cercana = None
         if evidencia_semantica:
             ev_sem = evidencia_semantica.get(desc_lower) or evidencia_semantica.get(original["description"].lower())
             if ev_sem:
                 puntuacion_semantica = ev_sem.get("semantic_score")
+                evidencia_cercana = ev_sem.get("text")
+        
+        evidencia_final = coincidencia.get("evidence")
+        
+        if not coincidencia["fulfilled"] and evidencia_cercana and not evidencia_final:
+            evidencia_final = f"[Fragmento mas cercano encontrado (score: {puntuacion_semantica:.2f}): '{evidencia_cercana[:150]}...'] - Contenido insuficiente para cumplir el requisito."
         
         requisito = Requisito(
             description=original["description"],
             type=TipoRequisito(original["type"]),
             fulfilled=coincidencia["fulfilled"],
             found_in_cv=coincidencia["found_in_cv"],
-            evidence=coincidencia.get("evidence"),
+            evidence=evidencia_final,
             confidence=confianza,
             reasoning=coincidencia.get("reasoning"),
             semantic_score=puntuacion_semantica or coincidencia.get("semantic_score")
@@ -134,8 +138,9 @@ def agregar_requisitos_no_procesados(
                 type=TipoRequisito(req["type"]),
                 fulfilled=False,
                 found_in_cv=False,
+                evidence="No se encontro informacion relacionada en el CV para evaluar este requisito.",
                 confidence=NivelConfianza.BAJO,
-                reasoning="Requisito no evaluado por el modelo"
+                reasoning="Requisito no evaluado por el modelo - sin evidencia disponible"
             )
             requisitos_no_cumplidos.append(requisito)
             requisitos_faltantes.append(req["description"])

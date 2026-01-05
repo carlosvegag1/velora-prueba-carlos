@@ -115,10 +115,24 @@ FORMATO DE RESPUESTA
 
 Para cada requisito:
 1. fulfilled: true/false basado en evidencia directa O contextual
-2. found_in_cv: true si hay informacion relacionada
-3. evidence: cita del CV (directa o contextual)
+2. found_in_cv: true si hay informacion relacionada (aunque insuficiente)
+3. evidence: SIEMPRE proporcionar:
+   - Si fulfilled=true: cita del CV que demuestra cumplimiento
+   - Si fulfilled=false: describir que se busco y por que no hay evidencia suficiente
 4. confidence: "high", "medium", "low"
 5. reasoning: explicacion breve
+
+EVIDENCIA PARA REQUISITOS NO CUMPLIDOS
+
+Cuando fulfilled=false, el campo evidence debe explicar:
+- Que fragmentos del CV se analizaron buscando evidencia
+- Cual fue el contenido mas cercano encontrado (si existe)
+- Por que ese contenido es insuficiente para cumplir el requisito
+
+Ejemplo para requisito no cumplido:
+   Requisito: "Experiencia en Python"
+   CV menciona: "Scripting con Bash y PowerShell"
+   evidence: "El CV menciona scripting con Bash y PowerShell pero no hay evidencia de Python. Las tecnologias mencionadas son scripting de sistemas, no desarrollo con Python."
 
 INSTRUCCIONES
 1. Lee el CV COMPLETO antes de evaluar cada requisito
@@ -126,7 +140,8 @@ INSTRUCCIONES
 3. Si el candidato demuestra conocimiento implicito, cuenta como evidencia
 4. Para experiencia temporal, suma TODOS los puestos relevantes
 5. Para alternativas, verifica CUALQUIERA de las opciones
-6. Se generoso con evidencia contextual clara, estricto con ausencia total de relacion"""
+6. Se generoso con evidencia contextual clara, estricto con ausencia total de relacion
+7. SIEMPRE proporciona evidence, tanto para requisitos cumplidos como no cumplidos"""
 
 
 PROMPT_EXTRACCION_REQUISITOS = _construir_prompt_extraccion()
