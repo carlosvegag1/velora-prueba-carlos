@@ -6,7 +6,7 @@ from typing import Optional
 from langchain_core.language_models import BaseChatModel
 
 from ..modelos import (
-    ResultadoEvaluacion, ResultadoFase1, Requisito, TipoRequisito, RespuestaEntrevista
+    ResultadoEvaluacion, ResultadoFase1, Requisito, TipoRequisito, RespuestaEntrevista, NivelConfianza
 )
 from ..nucleo import AnalizadorFase1, EntrevistadorFase2
 from ..utilidades import cargar_archivo_texto, calcular_puntuacion
@@ -198,7 +198,8 @@ class Orquestador:
                 tipo=resp.tipo_requisito,
                 cumplido=evaluacion["fulfilled"],
                 encontrado_en_cv=False,
-                evidencia=evaluacion.get("evidence")
+                evidencia=evaluacion.get("evidence"),
+                confianza=NivelConfianza(evaluacion["confidence"])
             )
             
             if evaluacion["fulfilled"]:

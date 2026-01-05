@@ -31,7 +31,7 @@ class Requisito(BaseModel):
     cumplido: bool = Field(default=False, alias="fulfilled")
     encontrado_en_cv: bool = Field(default=False, alias="found_in_cv")
     evidencia: Optional[str] = Field(None, alias="evidence")
-    confianza: NivelConfianza = Field(default=NivelConfianza.MEDIO, alias="confidence")
+    confianza: NivelConfianza = Field(..., alias="confidence")
     razonamiento: Optional[str] = Field(None, alias="reasoning")
     puntuacion_semantica: Optional[float] = Field(None, alias="semantic_score", ge=0, le=1)
 
@@ -57,7 +57,7 @@ class ResultadoMatching(BaseModel):
     fulfilled: bool = Field(...)
     found_in_cv: bool = Field(...)
     evidence: Optional[str] = Field(None)
-    confidence: Literal["high", "medium", "low"] = Field(default="medium")
+    confidence: Literal["high", "medium", "low"] = Field(...)
     reasoning: str = Field(default="")
 
 
@@ -71,7 +71,7 @@ class EvaluacionRespuesta(BaseModel):
     """Evaluación de respuesta del candidato en entrevista."""
     fulfilled: bool = Field(...)
     evidence: Optional[str] = Field(None)
-    confidence: Literal["high", "medium", "low"] = Field(default="medium")
+    confidence: Literal["high", "medium", "low"] = Field(...)
 
 
 # Modelos de resultados

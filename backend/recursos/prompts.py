@@ -3,8 +3,6 @@ Prompts del sistema Velora para interaccion con LLMs.
 Estructura estandar: ROL + CONTEXTO + TAREA + LOGICA + INSTRUCCIONES
 """
 
-from ..utilidades.contexto_temporal import obtener_contexto_prompt
-
 
 def _construir_prompt_extraccion() -> str:
     return """ROL
@@ -119,8 +117,19 @@ Para cada requisito:
 3. evidence: SIEMPRE proporcionar:
    - Si fulfilled=true: cita del CV que demuestra cumplimiento
    - Si fulfilled=false: describir que se busco y por que no hay evidencia suficiente
-4. confidence: "high", "medium", "low"
+4. confidence: nivel de certeza en tu evaluacion
 5. reasoning: explicacion breve
+
+CRITERIOS DE CONFIANZA
+
+- "high": Evidencia directa y explicita en el CV. El requisito se menciona literalmente o hay datos concretos (años, certificaciones, proyectos especificos).
+- "medium": Evidencia contextual o inferida. El conocimiento se deduce de tecnologias relacionadas o experiencia implicita.
+- "low": Evaluacion incierta. Poca informacion disponible, conexion debil entre CV y requisito, o ausencia casi total de evidencia.
+
+Ejemplos:
+- "5 años con Python" -> fulfilled=true, confidence="high" (dato explicito)
+- "Trabajo con APIs REST" cuando pide microservicios -> fulfilled=true, confidence="medium" (inferido)
+- Sin mencion de la tecnologia -> fulfilled=false, confidence="high" (certeza de ausencia)
 
 EVIDENCIA PARA REQUISITOS NO CUMPLIDOS
 

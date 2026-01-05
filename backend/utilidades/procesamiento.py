@@ -85,8 +85,10 @@ def procesar_coincidencias(
         if not original:
             continue
         
-        confianza_str = coincidencia.get("confidence", "medium")
-        confianza = NivelConfianza(confianza_str) if confianza_str else NivelConfianza.MEDIO
+        confianza_str = coincidencia.get("confidence")
+        if not confianza_str:
+            raise ValueError(f"El LLM no devolvio confidence para: {desc_limpia}")
+        confianza = NivelConfianza(confianza_str)
         
         puntuacion_semantica = None
         evidencia_cercana = None

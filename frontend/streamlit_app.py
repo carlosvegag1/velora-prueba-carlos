@@ -1092,7 +1092,7 @@ def display_phase1_results(phase1_result):
     if phase1_result.requisitos_cumplidos:
         with st.expander(f"Requisitos Cumplidos ({len(phase1_result.requisitos_cumplidos)})", expanded=True):
             for req in phase1_result.requisitos_cumplidos:
-                confidence = getattr(req, 'confidence', None)
+                confidence = getattr(req, 'confianza', None)
                 if hasattr(confidence, 'value'):
                     confidence_val = confidence.value
                 else:
@@ -1125,7 +1125,7 @@ def display_phase1_results(phase1_result):
                 req_type_val = req.tipo.value if hasattr(req.tipo, 'value') else str(req.tipo)
                 tipo_text = format_requirement_type_text(req_type_val)
                 
-                confidence = getattr(req, 'confidence', None)
+                confidence = getattr(req, 'confianza', None)
                 if hasattr(confidence, 'value'):
                     confidence_val = confidence.value
                 else:
