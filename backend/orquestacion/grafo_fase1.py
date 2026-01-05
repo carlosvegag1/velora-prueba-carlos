@@ -1,7 +1,6 @@
 """
 Grafo LangGraph para orquestacion multi-agente de la Fase 1.
 
-Incluye normalizacion atomica y contexto temporal para reproducibilidad.
 Flujo: extraer_requisitos -> embeber_cv -> matching_semantico -> calcular_puntuacion
 """
 
@@ -20,10 +19,9 @@ from ..modelos import (
 from ..recursos import PROMPT_EXTRACCION_REQUISITOS, PROMPT_MATCHING_CV
 from ..utilidades import (
     calcular_puntuacion, procesar_coincidencias,
-    agregar_requisitos_no_procesados, obtener_registro_operacional
+    agregar_requisitos_no_procesados, obtener_registro_operacional,
+    obtener_contexto_prompt
 )
-from ..utilidades.normalizacion import normalizar_requisitos
-from ..utilidades.contexto_temporal import obtener_contexto_prompt
 from ..infraestructura.llm import ComparadorSemantico
 
 
@@ -47,7 +45,7 @@ Phase1State = EstadoFase1
 
 
 def crear_nodo_extraccion(llm: BaseChatModel):
-    """Nodo que extrae requisitos con granularidad atomica."""
+    """Nodo que extrae requisitos via LLM."""
     llm_extraccion = llm.with_structured_output(RespuestaExtraccionRequisitos)
     
     def extraer_requisitos(estado: EstadoFase1) -> dict:
@@ -66,19 +64,17 @@ def crear_nodo_extraccion(llm: BaseChatModel):
         try:
             resultado: RespuestaExtraccionRequisitos = chain.invoke({"job_offer": oferta})
             
-            requisitos_raw = []
+            requisitos = []
             vistos = set()
             
             for req in resultado.requirements:
-                normalizado = req.description.lower().strip()
-                if normalizado not in vistos:
-                    vistos.add(normalizado)
-                    requisitos_raw.append({
+                clave = req.description.lower().strip()
+                if clave not in vistos:
+                    vistos.add(clave)
+                    requisitos.append({
                         "description": req.description.strip(),
                         "type": req.type
                     })
-            
-            requisitos = normalizar_requisitos(requisitos_raw)
             
             if not requisitos:
                 return {
@@ -89,7 +85,7 @@ def crear_nodo_extraccion(llm: BaseChatModel):
             
             return {
                 "requisitos": requisitos,
-                "mensajes": [f"[OK] Extraidos {len(requisitos)} requisitos (normalizados)"]
+                "mensajes": [f"[OK] Extraidos {len(requisitos)} requisitos"]
             }
         except Exception as e:
             return {
@@ -157,7 +153,7 @@ create_embed_node = crear_nodo_embedding
 
 
 def crear_nodo_matching(llm: BaseChatModel):
-    """Nodo que evalua requisitos con contexto temporal."""
+    """Nodo que evalua requisitos con fecha actual dinamica."""
     llm_matching = llm.with_structured_output(RespuestaMatchingCV)
     
     def matching_cv(estado: EstadoFase1) -> dict:

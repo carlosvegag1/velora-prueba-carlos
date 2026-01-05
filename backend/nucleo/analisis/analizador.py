@@ -22,10 +22,9 @@ from ...infraestructura.llm import (
 )
 from ...utilidades import (
     calcular_puntuacion, procesar_coincidencias,
-    agregar_requisitos_no_procesados, obtener_registro_operacional
+    agregar_requisitos_no_procesados, obtener_registro_operacional,
+    obtener_contexto_prompt
 )
-from ...utilidades.normalizacion import normalizar_requisitos
-from ...utilidades.contexto_temporal import obtener_contexto_prompt
 
 
 class AnalizadorFase1:
@@ -33,9 +32,9 @@ class AnalizadorFase1:
     Analizador de Fase 1: Extrae requisitos y evalua su cumplimiento contra el CV.
     
     Garantiza:
-    - Granularidad atomica mediante normalizacion post-extraccion
-    - Contexto temporal consistente en todas las evaluaciones
-    - Reproducibilidad del 100% en extraccion de requisitos
+    - Agrupacion inteligente de requisitos via LLM
+    - Fecha actual dinamica para calculos de experiencia temporal
+    - Reproducibilidad en extraccion de requisitos
     """
     
     def __init__(
@@ -137,8 +136,8 @@ class AnalizadorFase1:
     
     def extraer_requisitos(self, oferta_trabajo: str) -> List[dict]:
         """
-        Extrae requisitos de una oferta de trabajo con granularidad atomica.
-        Aplica normalizacion post-extraccion para descomponer requisitos compuestos.
+        Extrae requisitos de una oferta de trabajo.
+        El LLM aplica la logica de agrupacion directamente via prompt.
         """
         prompt = ChatPromptTemplate.from_messages([
             ("system", PROMPT_EXTRACCION_REQUISITOS),
@@ -148,21 +147,19 @@ class AnalizadorFase1:
         chain = prompt | self.llm_extraccion
         resultado: RespuestaExtraccionRequisitos = chain.invoke({"job_offer": oferta_trabajo})
         
-        requisitos_raw = []
+        requisitos = []
         vistos = set()
         
         for req in resultado.requirements:
-            normalizado = req.description.lower().strip()
-            if normalizado not in vistos:
-                vistos.add(normalizado)
-                requisitos_raw.append({
+            clave = req.description.lower().strip()
+            if clave not in vistos:
+                vistos.add(clave)
+                requisitos.append({
                     "description": req.description.strip(),
                     "type": req.type
                 })
         
-        requisitos_normalizados = normalizar_requisitos(requisitos_raw)
-        
-        return requisitos_normalizados
+        return requisitos
     
     extract_requirements = extraer_requisitos
     
@@ -201,7 +198,7 @@ class AnalizadorFase1:
     ) -> dict:
         """
         Evalua que requisitos se cumplen segun el CV.
-        Incluye contexto temporal para calculo preciso de experiencia.
+        Incluye fecha actual dinamica para calculo preciso de experiencia.
         """
         if not requisitos:
             return {"matches": [], "analysis_summary": "No hay requisitos para evaluar."}

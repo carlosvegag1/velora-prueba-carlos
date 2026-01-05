@@ -1,20 +1,17 @@
 """
-Velora: Sistema de Evaluación de Candidatos con IA.
+Velora: Sistema de Evaluacion de Candidatos con IA.
 
-Arquitectura de Capas v3.0:
+Arquitectura de Capas:
 - modelos: Estructuras de datos Pydantic
 - utilidades: Funciones auxiliares transversales
-- recursos: Prompts y configuraciones estáticas
-- infraestructura: Integraciones externas (LLM, embeddings, extracción, persistencia)
-- nucleo: Lógica de negocio (análisis, entrevista, historial)
-- orquestacion: Coordinación de flujos de trabajo
-
-Nomenclatura castellana con aliases inglés para compatibilidad.
+- recursos: Prompts y configuraciones
+- infraestructura: Integraciones externas (LLM, embeddings, extraccion, persistencia)
+- nucleo: Logica de negocio (analisis, entrevista, historial)
+- orquestacion: Coordinacion de flujos de trabajo
 """
 
-__version__ = "3.1.0"
+__version__ = "3.2.0"
 
-# Modelos de datos
 from .modelos import (
     TipoRequisito, NivelConfianza,
     Requisito, ResultadoFase1, ResultadoEvaluacion,
@@ -29,7 +26,6 @@ from .modelos import (
     ResponseEvaluation,
 )
 
-# Utilidades
 from .utilidades import (
     RegistroOperacional, obtener_registro_operacional,
     Colores, Indicadores,
@@ -38,7 +34,6 @@ from .utilidades import (
     procesar_coincidencias, agregar_requisitos_no_procesados,
 )
 
-# Núcleo
 from .nucleo import (
     AnalizadorFase1, Phase1Analyzer,
     EntrevistadorFase2, Phase2Interviewer, AgenticInterviewer,
@@ -46,17 +41,13 @@ from .nucleo import (
     AsistenteHistorial, HistoryChatbot,
 )
 
-# Orquestación
 from .orquestacion import (
     Orquestador, CoordinadorEvaluacion, Orchestrator, CandidateEvaluator,
     EstadoFase1, Phase1State,
-    ConstructorGrafoFase1, GrafoFase1Builder, Phase1GraphBuilder,
-    ejecutar_analisis_con_grafo, run_phase1_with_graph,
     crear_grafo_fase1, create_phase1_graph,
     ejecutar_grafo_fase1, run_phase1_graph,
 )
 
-# Infraestructura
 from .infraestructura import (
     FabricaLLM, LLMFactory,
     FabricaEmbeddings, EmbeddingFactory,
@@ -72,7 +63,6 @@ from .infraestructura import (
     crear_evaluacion_enriquecida, create_enriched_evaluation,
 )
 
-# Recursos
 from .recursos import (
     PROMPT_EXTRACCION_REQUISITOS,
     PROMPT_MATCHING_CV,
@@ -89,7 +79,6 @@ from .recursos import (
 
 __all__ = [
     "__version__",
-    # Modelos
     "TipoRequisito", "NivelConfianza",
     "Requisito", "ResultadoFase1", "ResultadoEvaluacion",
     "PreguntaEntrevista", "RespuestaEntrevista",
@@ -101,23 +90,17 @@ __all__ = [
     "InterviewQuestion", "InterviewResponse",
     "RequirementsExtractionResponse", "CVMatchingResponse",
     "ResponseEvaluation",
-    # Utilidades
     "RegistroOperacional", "obtener_registro_operacional",
     "Colores", "Indicadores",
     "calcular_puntuacion", "cargar_archivo_texto",
-    # Núcleo
     "AnalizadorFase1", "Phase1Analyzer",
     "EntrevistadorFase2", "Phase2Interviewer", "AgenticInterviewer",
     "AlmacenVectorialHistorial", "HistoryVectorStore",
     "AsistenteHistorial", "HistoryChatbot",
-    # Orquestación
     "Orquestador", "CoordinadorEvaluacion", "Orchestrator", "CandidateEvaluator",
     "EstadoFase1", "Phase1State",
-    "ConstructorGrafoFase1", "GrafoFase1Builder", "Phase1GraphBuilder",
-    "ejecutar_analisis_con_grafo", "run_phase1_with_graph",
     "crear_grafo_fase1", "create_phase1_graph",
     "ejecutar_grafo_fase1", "run_phase1_graph",
-    # Infraestructura
     "FabricaLLM", "LLMFactory",
     "FabricaEmbeddings", "EmbeddingFactory",
     "ComparadorSemantico", "SemanticMatcher",
@@ -130,7 +113,6 @@ __all__ = [
     "MemoriaUsuario", "UserMemory",
     "EvaluacionEnriquecida", "EnrichedEvaluation",
     "crear_evaluacion_enriquecida", "create_enriched_evaluation",
-    # Recursos
     "PROMPT_EXTRACCION_REQUISITOS",
     "PROMPT_MATCHING_CV",
     "PROMPT_EVALUAR_RESPUESTA",

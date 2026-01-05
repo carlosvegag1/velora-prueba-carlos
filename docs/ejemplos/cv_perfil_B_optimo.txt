@@ -23,7 +23,7 @@ IDIOMAS
 EXPERIENCIA PROFESIONAL
 
 Senior Database Administrator
-Multinacional Financiera S.A. | Madrid | Marzo 2021 - Actualidad (4 años)
+Multinacional Financiera S.A. | Madrid | Marzo 2021 - Actualidad
 - Administración de clusters Oracle RAC 19c en entornos críticos de producción
 - Implementación y gestión de Oracle Dataguard para disaster recovery
 - Administración de Grid Infrastructure en arquitecturas complejas
@@ -35,7 +35,7 @@ Multinacional Financiera S.A. | Madrid | Marzo 2021 - Actualidad (4 años)
 - Administración de servidores Linux Red Hat 7/8 y Windows Server 2019
 
 Database Administrator
-Consultora IT Global | Madrid | Enero 2019 - Febrero 2021 (2 años)
+Consultora IT Global | Madrid | Enero 2019 - Febrero 2021
 - Administración de Oracle 12c y SQL Server 2017
 - Implementación de Oracle Dataguard
 - Gestión de backups con RMAN

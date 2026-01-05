@@ -18,7 +18,7 @@ IDIOMAS
 EXPERIENCIA PROFESIONAL
 
 Administradora de Bases de Datos Junior
-TechSolutions S.L. | Madrid | Enero 2021 - Actualidad (3 años)
+TechSolutions S.L. | Madrid | Enero 2021 - Actualidad
 - Administración de bases de datos Oracle 12c y 19c
 - Gestión de SQL Server y PostgreSQL
 - Configuración y mantenimiento de Oracle RAC en entornos de producción

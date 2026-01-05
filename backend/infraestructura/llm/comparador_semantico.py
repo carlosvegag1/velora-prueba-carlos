@@ -1,6 +1,6 @@
 """
-Comparador Semántico: Embeddings para pre-filtrar evidencia en el CV.
-Utiliza FAISS para búsqueda vectorial.
+Comparador Semantico: Embeddings para enriquecer contexto en evaluacion de CV.
+Busqueda vectorial con FAISS. Prioriza comprension global sobre coincidencias literales.
 """
 
 import re
@@ -13,8 +13,9 @@ from .embedding_proveedor import FabricaEmbeddings
 
 class ComparadorSemantico:
     """
-    Comparador semántico que usa embeddings para encontrar evidencia en el CV.
-    Mejora precisión del matching al pre-filtrar información relevante.
+    Comparador semantico que usa embeddings para enriquecer el contexto de evaluacion.
+    Los resultados son sugerencias para el LLM, NO restricciones.
+    El LLM siempre evalua el CV completo con comprension global.
     """
     
     def __init__(self, proveedor_embeddings: Optional[str] = None, api_key: Optional[str] = None):
@@ -38,11 +39,14 @@ class ComparadorSemantico:
     def model(self):
         return self.modelo
     
-    def _dividir_cv_en_chunks(self, texto_cv: str, tamano_chunk: int = 500, solapamiento: int = 50) -> List[str]:
-        """Divide el CV en chunks semánticos por secciones o tamaño."""
+    def _dividir_cv_en_chunks(self, texto_cv: str, tamano_chunk: int = 800, solapamiento: int = 150) -> List[str]:
+        """
+        Divide el CV en chunks semanticos amplios para capturar contexto completo.
+        Prioriza secciones naturales del CV sobre division arbitraria.
+        """
         patrones_seccion = [
-            r'\n(?=(?:EXPERIENCIA|FORMACIÓN|EDUCACIÓN|HABILIDADES|SKILLS|IDIOMAS|PROYECTOS|CERTIFICACIONES))',
-            r'\n(?=[A-ZÁÉÍÓÚÑ]{3,}\s*(?:\n|:))',
+            r'\n(?=(?:EXPERIENCIA|FORMACION|EDUCACION|HABILIDADES|SKILLS|IDIOMAS|PROYECTOS|CERTIFICACIONES|PERFIL|RESUMEN))',
+            r'\n(?=[A-ZÁÉÍÓÚÑ]{4,}\s*(?:\n|:))',
             r'\n{2,}',
         ]
         
@@ -67,7 +71,7 @@ class ComparadorSemantico:
                     chunks_finales.append(chunk)
             chunks = chunks_finales
         
-        return [c for c in chunks if len(c) > 20]
+        return [c for c in chunks if len(c) > 30]
     
     def _dividir_por_tamano(self, texto: str, tamano_chunk: int, solapamiento: int) -> List[str]:
         chunks = []
@@ -94,7 +98,7 @@ class ComparadorSemantico:
         return chunks
     
     def indexar_cv(self, texto_cv: str) -> int:
-        """Indexa el CV creando vectorstore temporal. Retorna número de chunks."""
+        """Indexa el CV creando vectorstore temporal. Retorna numero de chunks."""
         self._chunks = self._dividir_cv_en_chunks(texto_cv)
         if not self._chunks:
             self._chunks = [texto_cv]
@@ -103,8 +107,12 @@ class ComparadorSemantico:
     
     index_cv = indexar_cv
     
-    def encontrar_evidencia(self, requisito: str, k: int = 3, umbral_score: float = 0.3) -> List[Tuple[str, float]]:
-        """Encuentra evidencia semántica para un requisito. Retorna [(texto, score)]."""
+    def encontrar_evidencia(self, requisito: str, k: int = 3, umbral_score: float = 0.2) -> List[Tuple[str, float]]:
+        """
+        Encuentra contexto semantico relevante para un requisito.
+        Umbral bajo (0.2) para capturar evidencia implicita y contextual.
+        Retorna [(texto, score)].
+        """
         if not self._vectorstore:
             return []
         
@@ -118,8 +126,8 @@ class ComparadorSemantico:
     
     find_evidence = encontrar_evidencia
     
-    def encontrar_toda_la_evidencia(self, requisitos: List[str], k: int = 2) -> Dict[str, List[Tuple[str, float]]]:
-        """Encuentra evidencia para múltiples requisitos."""
+    def encontrar_toda_la_evidencia(self, requisitos: List[str], k: int = 3) -> Dict[str, List[Tuple[str, float]]]:
+        """Encuentra contexto para multiples requisitos."""
         return {req: self.encontrar_evidencia(req, k=k) for req in requisitos}
     
     find_all_evidence = encontrar_toda_la_evidencia
